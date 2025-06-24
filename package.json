@@ -1,6 +1,6 @@
 {
   "name": "blind-maze",
-  "version": "0.1.0",
+  "version": "0.0.1",
   "private": true,
   "scripts": {
     "dev": "next dev --turbopack",
@@ -14,7 +14,6 @@
     "react-dom": "^19.1.0"
   },
   "devDependencies": {
-    "@babel/preset-typescript": "^7.27.1",
     "@eslint/eslintrc": "^3",
     "@types/jest": "^30.0.0",
     "@types/node": "^20",
