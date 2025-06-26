@@ -7,7 +7,7 @@
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
-    "startServer": "npx ts-node ./src/app/lib/server/server.ts"
+    "startServer": "npx tsx ./src/app/lib/server/server.ts"
   },
   "dependencies": {
     "next": "^15.3.3",

@@ -24,34 +24,47 @@ var state: GameState = {
 
 var open = true;
 
-
 server.on("connection", (connection) => {
     console.log(`Established connection with ${connection.url}`)
 
     // Handle inputs
     connection.on('message', (event) => {
-        // Potentially send full player states
+        // Potentially receive full player states
     })
 
-    // Emit constant rate of current states
-    async () => {
-        const startTimeMs = Date.now();
-        const TICK_RATE = config.tickRate;
-        let updates = 0;
-        while (open) {
-
-            if (
-                (Date.now() - startTimeMs) / 1000 * TICK_RATE > updates
-            ) {
-                // Update states
-                server.clients.forEach(async (client) => {
-                    client.send(gameStateToBinary(state))
-                })
-            }
-
-        }
-    }
-
-
     connection.send(`Connection ready with ${server.address()}.`);
+    console.log(`Connection ready with ${server.address()}.`)
 })
+
+server.on("error", (error) => {
+    console.log(error);
+})
+
+server.on("close", () => {
+    console.log("Server closed.")
+})
+
+server.on("wsClientError", (error) => {
+    console.log(error);
+})
+
+// Emit constant rate of current states
+async () => {
+    const startTimeMs = Date.now();
+    const TICK_RATE = config.tickRate;
+    let updates = 0;
+    while (open) {
+
+        if (
+            (Date.now() - startTimeMs) / 1000 * TICK_RATE > updates
+        ) {
+            // Update states
+            server.clients.forEach(async (client) => {
+                client.send(gameStateToBinary(state))
+            })
+        }
+
+    }
+}
+
+console.log(`Server initialized at ${server.address()}`)

@@ -1,5 +1,5 @@
 {
-    "host": "",
+    "host": "localhost",
     "port": 3000,
     "tickRate": 60
 }
