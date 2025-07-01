@@ -1,4 +1,4 @@
-import { GameState } from "./game_types"
+import { GameState, PlayerSnapshot } from "./game_types"
 
 interface ClientMessage {
     // TODO: Implement
@@ -10,11 +10,19 @@ interface ServerMessage {
     message: String
 }
 
-function gameStateToBinary(state: GameState): string {
+function gameStateToBinary(state: GameState): any {
     return JSON.stringify(state);
 }
 
 function gameStateFromBinary(binary: any): GameState {
+    return JSON.parse(binary);
+}
+
+function playerStateToBinary(state: PlayerSnapshot): any {
+    return JSON.stringify(state);
+}
+
+function playerStateFromBinary(binary: any): PlayerSnapshot {
     return JSON.parse(binary);
 }
 
@@ -24,5 +32,7 @@ export type {
 }
 export {
     gameStateToBinary,
-    gameStateFromBinary
+    gameStateFromBinary,
+    playerStateToBinary,
+    playerStateFromBinary,
 }
