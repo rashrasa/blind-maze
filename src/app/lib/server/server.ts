@@ -1,6 +1,8 @@
+// Standalone server component capable of accepting connections from game clients
+
 import { WebSocketServer } from 'ws';
-import { GameState, MapLayout } from '../types/game_types';
-import { ServerMessage, ClientMessage, gameStateToBinary } from '../types/communication';
+import { GameState } from '../types/game_types';
+import { gameStateToBinary } from '../types/communication';
 import config from './server-config.json';
 
 // Simple websocket server
@@ -41,7 +43,8 @@ server.on("error", (error) => {
 })
 
 server.on("close", () => {
-    console.log("Server closed.")
+    console.log("Server closed.");
+    open = false;
 })
 
 server.on("wsClientError", (error) => {
