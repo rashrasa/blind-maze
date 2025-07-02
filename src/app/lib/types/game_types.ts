@@ -28,7 +28,7 @@ interface PlayerSnapshot {
     isLeader: boolean;
     player: Player;
     position: { x: number; y: number };
-    snapshotTimestamp: Date;
+    snapshotTimestampMs: number;
 }
 
 /**
@@ -45,22 +45,12 @@ enum TileType {
 }
 
 /**
- * Represents a single tile in a game map.
- */
-interface Tile {
-    id: string;
-    type: TileType;
-    x: number;
-    y: number;
-}
-
-/**
  * Represents an entire game map layout.
  */
 interface MapLayout {
     width: number;
     height: number;
-    tiles: Tile[][];
+    tiles: TileType[][];
 }
 
 /**
@@ -77,7 +67,6 @@ export type {
     Player,
     PlayerSnapshot,
     GameState,
-    Tile,
     MapLayout,
     MapConfiguration
 }

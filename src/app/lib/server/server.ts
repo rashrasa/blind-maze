@@ -2,7 +2,7 @@
 
 import { WebSocketServer, WebSocket } from 'ws';
 import { GameState } from '../types/game_types';
-import { gameStateToBinary } from '../types/communication';
+import { gameStateFromBinary, gameStateToBinary } from '../types/communication';
 import config from './server-config.json';
 import { generateMap } from '../generation/map_generation';
 
@@ -35,7 +35,8 @@ server.on("connection", (connection) => {
 
     // Handle inputs
     connection.on('message', (event) => {
-        // Potentially receive full player states
+        state = gameStateFromBinary(event)
+        updateClients()
     })
 
     connection.on("close", (event) => {
@@ -45,7 +46,7 @@ server.on("connection", (connection) => {
         console.log(`Connection closed with ${connection.url}`)
     })
 
-    connection.send(gameStateToBinary(state));
+    updateClients()
     console.log(`Connection ready with ${connection.url}.`)
 })
 
@@ -73,16 +74,20 @@ async function serverLoop() {
         if (
             (Date.now() - startTimeMs) / 1000 * TICK_RATE > updates
         ) {
-            // Update states
-            server.clients.forEach(async (client) => {
-                client.send(gameStateToBinary(state))
-            })
+            updateClients()
             updates++;
             if (updates % 60 == 0) {
                 console.log(`Emitted ${updates} updates`)
             }
         }
     }
+}
+
+function updateClients() {
+    // Update states
+    server.clients.forEach(async (client) => {
+        client.send(gameStateToBinary(state))
+    })
 }
 
 console.log(`Server initialized at ${JSON.stringify(server.address())}`)

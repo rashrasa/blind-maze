@@ -1,7 +1,7 @@
 "use client";
 import React, { ReactNode, useRef, useState } from "react";
-import { PlayerSnapshot } from "../types/game_types";
-import { gameStateToBinary, playerStateToBinary } from "../types/communication";
+import { GameState, Player, PlayerSnapshot } from "../types/game_types";
+import { gameStateFromBinary, gameStateToBinary, playerStateToBinary } from "../types/communication";
 import WebSocketAsPromised from "websocket-as-promised";
 
 enum GameClientMenu {
@@ -21,11 +21,29 @@ interface GameClientProps { }
 const GameClient: React.FC<GameClientProps> = () => {
     const serverInput = useRef<HTMLTextAreaElement>(null);
     const error = useRef<string>(null)
+    const thisPlayer: Player = {
+        id: "abcde",
+        displayName: "Player 0",
+        username: "username",
+        avatarUrl: "google.ca"
+    }
 
     const [state, setState] = useState<GameClientState>({
         menu: GameClientMenu.MAIN_MENU,
         server: null,
     });
+
+    const [playerState, setPlayerState] = useState<PlayerSnapshot>({
+        player: thisPlayer,
+        isLeader: false,
+        position: {
+            x: 5.5,
+            y: 5.5
+        },
+        snapshotTimestampMs: Date.now()
+    })
+
+    const [gameStateSnapshot, setGameStateSnapshot] = useState<GameState | null>(null);
     switch (state.menu) {
         case GameClientMenu.MAIN_MENU: {
             return (
@@ -57,6 +75,18 @@ const GameClient: React.FC<GameClientProps> = () => {
                                     error.current = "Error: Failed to connect to server."
                                 }
                                 else {
+                                    server.addEventListener("message", (ev) => {
+
+                                        setGameStateSnapshot(gameStateFromBinary(ev))
+
+                                    })
+                                    server.addEventListener("close", () => {
+                                        setState({
+                                            server: null,
+                                            menu: GameClientMenu.MAIN_MENU
+                                        })
+                                    })
+                                    sendUpdatedState(server, playerState)
                                     setState({ server: server, menu: GameClientMenu.GAME_SCREEN })
                                 }
                             }
@@ -71,9 +101,25 @@ const GameClient: React.FC<GameClientProps> = () => {
                 <div></div>
             );
         case GameClientMenu.GAME_SCREEN:
+
             return (
-                <div className="bg-gray-200 w-full h-full">
-                    <span className="z-10">Connected to: {state?.server?.url.substring("ws://".length)}</span>
+                <div className="bg-black w-full h-full">
+                    {/* Z = 10 */}
+                    <span className="absolute z-10 text-gray-300">Connected to: {state?.server?.url.substring("ws://".length)} <span className="cursor-pointer text-red-400"
+                        onClick={() => {
+                            state.server?.close();
+                            setState({
+                                server: null,
+                                menu: GameClientMenu.MAIN_MENU
+                            })
+                        }}>Disconnect</span>
+                    </span>
+                    {/* Z = 0 */}
+                    {(gameStateSnapshot != null) ?
+                        renderGame(gameStateSnapshot, playerState, 600, 600) :
+                        <span className="relative text-white" style={{ top: "250px", left: "155px" }}>
+                            Initial game state not been received yet.
+                        </span>}
                 </div>
             );
 
@@ -112,6 +158,26 @@ async function connectToServer(server: string | null): Promise<WebSocket | null>
 
 async function sendUpdatedState(server: WebSocket, state: PlayerSnapshot) {
     server.send(playerStateToBinary(state));
+}
+
+function renderGame(state: GameState, thisPlayer: PlayerSnapshot, viewPortWidthPx: number, viewPortHeightPx: number): ReactNode {
+    const PIXELS_PER_TILE = 60
+    const PLAYER_SQUARE_LENGTH_TILES = 0.25
+    const CENTER_X = thisPlayer.position.x
+    const CENTER_Y = thisPlayer.position.y
+
+    return (
+        <div style={{ width: `${viewPortWidthPx} px`, height: `${viewPortHeightPx} px` }}>
+            <div
+                className="bg-white absolute"
+                style={{
+                    top: `${(CENTER_Y - PLAYER_SQUARE_LENGTH_TILES * PIXELS_PER_TILE)}px`,
+                    left: `${(CENTER_X - PLAYER_SQUARE_LENGTH_TILES * PIXELS_PER_TILE)}px`,
+                    width: `${PLAYER_SQUARE_LENGTH_TILES * PIXELS_PER_TILE}px`,
+                    height: `${PLAYER_SQUARE_LENGTH_TILES * PIXELS_PER_TILE}px`
+                }}></div>
+        </div>
+    )
 }
 
 export default GameClient;
