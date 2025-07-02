@@ -1,20 +1,20 @@
 // Standalone server component capable of accepting connections from game clients
 
-import { WebSocketServer } from 'ws';
+import { WebSocketServer, WebSocket } from 'ws';
 import { GameState } from '../types/game_types';
 import { gameStateToBinary } from '../types/communication';
 import config from './server-config.json';
 
 // Simple websocket server
-const ip = config.host
-const port = config.port
+const ip: string = config.host
+const port: number = config.port
 
 const server = new WebSocketServer({
-    host: ip,
-    port: port
+    port: 3001
 });
 
-const connections: string[] = []
+let connections: WebSocket[] = []
+
 var state: GameState = {
     playerStates: [],
     map: {
@@ -28,14 +28,21 @@ var open = true;
 
 server.on("connection", (connection) => {
     console.log(`Established connection with ${connection.url}`)
+    connections.push(connection)
 
     // Handle inputs
     connection.on('message', (event) => {
         // Potentially receive full player states
     })
 
-    connection.send(`Connection ready with ${server.address()}.`);
-    console.log(`Connection ready with ${server.address()}.`)
+    connection.on("close", (event) => {
+        connections = connections.filter((ws) => {
+            return ws !== connection
+        })
+    })
+
+    connection.send(`Connection ready with ${connection.url}.`);
+    console.log(`Connection ready with ${connection.url}.`)
 })
 
 server.on("error", (error) => {
@@ -51,12 +58,13 @@ server.on("wsClientError", (error) => {
     console.log(error);
 })
 
-// Emit constant rate of current states
-async () => {
-    const startTimeMs = Date.now();
-    const TICK_RATE = config.tickRate;
-    let updates = 0;
+
+async function serverLoop() {
     while (open) {
+        // Emit constant rate of current states
+        const startTimeMs = Date.now();
+        const TICK_RATE = config.tickRate;
+        let updates = 0;
 
         if (
             (Date.now() - startTimeMs) / 1000 * TICK_RATE > updates
@@ -65,9 +73,18 @@ async () => {
             server.clients.forEach(async (client) => {
                 client.send(gameStateToBinary(state))
             })
+            updates++;
+            if (updates % 60 == 0) {
+                console.log(`Emitted ${updates} updates`)
+            }
         }
-
     }
 }
 
-console.log(`Server initialized at ${server.address()}`)
+console.log(`Server initialized at ${JSON.stringify(server.address())}`)
+
+process.on("SIGINT", function () {
+    console.log("Closed server!")
+    server.close()
+    process.exit(1);
+});

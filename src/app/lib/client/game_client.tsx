@@ -20,6 +20,8 @@ interface GameClientProps { }
 
 const GameClient: React.FC<GameClientProps> = () => {
     const serverInput = useRef<HTMLTextAreaElement>(null);
+    const error = useRef<string>(null)
+
     const [state, setState] = useState<GameClientState>({
         menu: GameClientMenu.MAIN_MENU,
         server: null,
@@ -52,12 +54,10 @@ const GameClient: React.FC<GameClientProps> = () => {
                             async (event) => {
                                 let server = await connectToServer("ws://" + serverInput?.current?.value)
                                 if (server == null) {
-                                    showInformationDialog("Error: Failed to connect to server.", "Ok")
+                                    error.current = "Error: Failed to connect to server."
                                 }
                                 else {
-                                    state["server"] = server;
-                                    state["menu"] = GameClientMenu.GAME_SCREEN
-                                    setState(state)
+                                    setState({ server: server, menu: GameClientMenu.GAME_SCREEN })
                                 }
                             }
                         }>
@@ -72,7 +72,9 @@ const GameClient: React.FC<GameClientProps> = () => {
             );
         case GameClientMenu.GAME_SCREEN:
             return (
-                <div className="bg-red-500"></div>
+                <div className="bg-gray-200 w-full h-full">
+                    <span className="z-10">Connected to: {state?.server?.url.substring("ws://".length)}</span>
+                </div>
             );
 
     }
