@@ -1,5 +1,8 @@
 {
     "host": "localhost",
     "port": 3000,
-    "tickRate": 60
+    "tickRate": 60,
+    "mapWidth": 20,
+    "mapHeight": 20,
+    "mapSeed": 4238947923234
 }
