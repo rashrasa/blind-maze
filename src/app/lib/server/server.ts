@@ -4,10 +4,17 @@ import { WebSocketServer, WebSocket } from 'ws';
 import { GameState } from '../types/game_types';
 import { gameStateToBinary } from '../types/communication';
 import config from './server-config.json';
+import { generateMap } from '../generation/map_generation';
 
 // Simple websocket server
 const ip: string = config.host
 const port: number = config.port
+
+const map = generateMap({
+    width: config.mapWidth,
+    height: config.mapHeight,
+    seed: config.mapSeed
+})
 
 const server = new WebSocketServer({
     port: 3001
@@ -17,11 +24,7 @@ let connections: WebSocket[] = []
 
 var state: GameState = {
     playerStates: [],
-    map: {
-        width: 0,
-        height: 0,
-        tiles: []
-    }
+    map: map
 }
 
 var open = true;
@@ -39,9 +42,10 @@ server.on("connection", (connection) => {
         connections = connections.filter((ws) => {
             return ws !== connection
         })
+        console.log(`Connection closed with ${connection.url}`)
     })
 
-    connection.send(`Connection ready with ${connection.url}.`);
+    connection.send(gameStateToBinary(state));
     console.log(`Connection ready with ${connection.url}.`)
 })
 
