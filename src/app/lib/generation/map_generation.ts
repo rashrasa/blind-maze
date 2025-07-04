@@ -17,14 +17,14 @@ function generateMap(config: MapConfiguration): MapLayout {
             else {
                 row.push(0)
             }
+            tiles.push(row)
         }
     }
-
     return {
         width: tiles.length,
         height: tiles[0]?.length || 0,
         tiles: tiles
-    }
+    } as const
 }
 
 export { generateMap };

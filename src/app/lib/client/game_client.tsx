@@ -85,7 +85,7 @@ const GameClient: React.FC<GameClientProps> = () => {
                                             menu: GameClientMenu.MAIN_MENU
                                         })
                                     })
-                                    sendUpdatedState(server, playerState)
+                                    await sendUpdatedState(server, playerState)
                                     setState({ server: server, menu: GameClientMenu.GAME_SCREEN })
                                 }
                             }
@@ -169,14 +169,9 @@ function renderGame(state: GameState, thisPlayer: PlayerSnapshot, viewPortWidthP
     const playerMap = state.playerStates;
     const players: PlayerSnapshot[] = Object.values(playerMap)
 
-    const rootElement = <div style={{ width: `${viewPortWidthPx} px`, height: `${viewPortHeightPx} px` }}>
-
-    </div>
-
     const thisPlayerElement = (<div
         className="bg-white absolute"
         style={{
-            zIndex: -1,
             top: `${(CENTER_Y - PLAYER_SQUARE_LENGTH_TILES * PIXELS_PER_TILE)}px`,
             left: `${(CENTER_X - PLAYER_SQUARE_LENGTH_TILES * PIXELS_PER_TILE)}px`,
             width: `${PLAYER_SQUARE_LENGTH_TILES * PIXELS_PER_TILE}px`,
@@ -207,7 +202,6 @@ function renderGame(state: GameState, thisPlayer: PlayerSnapshot, viewPortWidthP
             <div
                 className="bg-white absolute"
                 style={{
-                    zIndex: -1,
                     top: `${((CENTER_Y - playerY) - PLAYER_SQUARE_LENGTH_TILES * PIXELS_PER_TILE)}px`,
                     left: `${((CENTER_X - playerX) - PLAYER_SQUARE_LENGTH_TILES * PIXELS_PER_TILE)}px`,
                     width: `${PLAYER_SQUARE_LENGTH_TILES * PIXELS_PER_TILE}px`,
@@ -217,8 +211,13 @@ function renderGame(state: GameState, thisPlayer: PlayerSnapshot, viewPortWidthP
             </div>
         )
     }
+    const rootElement = <div style={{ width: `${viewPortWidthPx} px`, height: `${viewPortHeightPx} px` }}>
+        {...playerElements}
+        {...tileElements}
+    </div>
 
-    return
+    return rootElement
+
 }
 
 export default GameClient;

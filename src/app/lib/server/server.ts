@@ -16,15 +16,15 @@ const map: MapLayout = generateMap({
     seed: config.mapSeed
 })
 
-const playerStates = new Map<string, PlayerSnapshot>()
+const playerStates: PlayerSnapshot[] = []
 
 const server = new WebSocketServer({
     port: 3001
 });
 
-let connections: WebSocket[] = []
+const connections: WebSocket[] = []
 
-var state: GameState = {
+const state: GameState = {
     playerStates: playerStates,
     map: map
 }
@@ -38,14 +38,13 @@ server.on("connection", (connection) => {
     // Handle inputs
     connection.on('message', (event) => {
         let playerState = playerStateFromBinary(event)
-        state.playerStates.set(playerState.player.id, playerState)
+        console.log(`Received state: ${event}`)
+        playerStates.push(playerState)
         updateClients()
     })
 
     connection.on("close", (event) => {
-        connections = connections.filter((ws) => {
-            return ws !== connection
-        })
+        connections.splice(connections.indexOf(connection))
         console.log(`Connection closed with ${connection.url}`)
     })
 
