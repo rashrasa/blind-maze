@@ -1,4 +1,4 @@
-# blind-maze
+# blind-maze (WIP)
 
 ## Start an Experimental Server
 
