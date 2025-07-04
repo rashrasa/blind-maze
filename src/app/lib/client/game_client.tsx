@@ -76,8 +76,8 @@ const GameClient: React.FC<GameClientProps> = () => {
                                 }
                                 else {
                                     server.addEventListener("message", (ev) => {
-                                        setGameStateSnapshot(gameStateFromBinary(ev.data))
-                                        console.log(`Received game state: ${JSON.stringify(ev.data)}`)
+                                        let data = gameStateFromBinary(ev.data)
+                                        setGameStateSnapshot(data)
                                     })
                                     server.addEventListener("close", () => {
                                         setState({
@@ -166,8 +166,7 @@ function renderGame(state: GameState, thisPlayer: PlayerSnapshot, viewPortWidthP
     const CENTER_Y = thisPlayer.position.y
 
     const tiles: TileType[][] = state.map.tiles;
-    const playerMap = state.playerStates;
-    const players: PlayerSnapshot[] = Object.values(playerMap)
+    const players: PlayerSnapshot[] = state.playerStates;
 
     const thisPlayerElement = (<div
         className="bg-white absolute"
@@ -195,6 +194,11 @@ function renderGame(state: GameState, thisPlayer: PlayerSnapshot, viewPortWidthP
 
     for (let i = 0; players.length; i++) {
         const player = players[i]
+        console.log(`Players: ${player}`)
+        if (player == undefined) {
+            console.log("WARNING: Undefined player object received.")
+            continue;
+        }
         const playerX = player.position.x
         const playerY = player.position.y
 
