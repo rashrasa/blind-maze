@@ -35,7 +35,7 @@ interface PlayerSnapshot {
  * Represents the state of the game at a specific moment in time.
  */
 interface GameState {
-    playerStates: PlayerSnapshot[];
+    playerStates: Map<string, PlayerSnapshot>;
     map: MapLayout;
 }
 

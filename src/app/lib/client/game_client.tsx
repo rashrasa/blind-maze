@@ -1,6 +1,6 @@
 "use client";
 import React, { ReactNode, useRef, useState } from "react";
-import { GameState, Player, PlayerSnapshot } from "../types/game_types";
+import { GameState, Player, PlayerSnapshot, TileType } from "../types/game_types";
 import { gameStateFromBinary, gameStateToBinary, playerStateToBinary } from "../types/communication";
 import WebSocketAsPromised from "websocket-as-promised";
 
@@ -53,7 +53,7 @@ const GameClient: React.FC<GameClientProps> = () => {
                     </span>
                     <hr className="py-4" />
                     <span className="text-2xl font-bold text-center" style={{ fontFamily: "Segoe UI" }}>Server Address</span>
-                    <textarea ref={serverInput} className="border-2 border-black resize-none" rows={1} placeholder="Enter server IP and Port..." />
+                    <textarea ref={serverInput} defaultValue={"127.0.0.1:3001"} className="border-2 border-black resize-none" rows={1} placeholder="Enter server IP and Port..." />
                     <span
                         className="
                             bg-green-600
@@ -76,9 +76,8 @@ const GameClient: React.FC<GameClientProps> = () => {
                                 }
                                 else {
                                     server.addEventListener("message", (ev) => {
-
-                                        setGameStateSnapshot(gameStateFromBinary(ev))
-
+                                        setGameStateSnapshot(gameStateFromBinary(ev.data))
+                                        console.log(`Received game state: ${JSON.stringify(ev.data)}`)
                                     })
                                     server.addEventListener("close", () => {
                                         setState({
@@ -166,18 +165,60 @@ function renderGame(state: GameState, thisPlayer: PlayerSnapshot, viewPortWidthP
     const CENTER_X = thisPlayer.position.x
     const CENTER_Y = thisPlayer.position.y
 
-    return (
-        <div style={{ width: `${viewPortWidthPx} px`, height: `${viewPortHeightPx} px` }}>
+    const tiles: TileType[][] = state.map.tiles;
+    const playerMap = state.playerStates;
+    const players: PlayerSnapshot[] = Object.values(playerMap)
+
+    const rootElement = <div style={{ width: `${viewPortWidthPx} px`, height: `${viewPortHeightPx} px` }}>
+
+    </div>
+
+    const thisPlayerElement = (<div
+        className="bg-white absolute"
+        style={{
+            zIndex: -1,
+            top: `${(CENTER_Y - PLAYER_SQUARE_LENGTH_TILES * PIXELS_PER_TILE)}px`,
+            left: `${(CENTER_X - PLAYER_SQUARE_LENGTH_TILES * PIXELS_PER_TILE)}px`,
+            width: `${PLAYER_SQUARE_LENGTH_TILES * PIXELS_PER_TILE}px`,
+            height: `${PLAYER_SQUARE_LENGTH_TILES * PIXELS_PER_TILE}px`
+        }}>
+
+    </div>)
+
+    const tileElements: ReactNode[] = []
+    const playerElements: ReactNode[] = []
+
+    for (let i = 0; i < tiles.length; i++) {
+        for (let j = 0; j < tiles[i].length; j++) {
+            tileElements.push(
+                <div>
+
+                </div>
+            )
+        }
+    }
+
+    for (let i = 0; players.length; i++) {
+        const player = players[i]
+        const playerX = player.position.x
+        const playerY = player.position.y
+
+        playerElements.push(
             <div
                 className="bg-white absolute"
                 style={{
-                    top: `${(CENTER_Y - PLAYER_SQUARE_LENGTH_TILES * PIXELS_PER_TILE)}px`,
-                    left: `${(CENTER_X - PLAYER_SQUARE_LENGTH_TILES * PIXELS_PER_TILE)}px`,
+                    zIndex: -1,
+                    top: `${((CENTER_Y - playerY) - PLAYER_SQUARE_LENGTH_TILES * PIXELS_PER_TILE)}px`,
+                    left: `${((CENTER_X - playerX) - PLAYER_SQUARE_LENGTH_TILES * PIXELS_PER_TILE)}px`,
                     width: `${PLAYER_SQUARE_LENGTH_TILES * PIXELS_PER_TILE}px`,
                     height: `${PLAYER_SQUARE_LENGTH_TILES * PIXELS_PER_TILE}px`
-                }}></div>
-        </div>
-    )
+                }}>
+
+            </div>
+        )
+    }
+
+    return
 }
 
 export default GameClient;

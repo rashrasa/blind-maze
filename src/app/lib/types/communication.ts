@@ -5,7 +5,8 @@ function gameStateToBinary(state: GameState): any {
 }
 
 function gameStateFromBinary(binary: any): GameState {
-    return JSON.parse(binary);
+    const gameState: GameState = JSON.parse(binary)
+    return gameState;
 }
 
 function playerStateToBinary(state: PlayerSnapshot): any {
@@ -13,7 +14,8 @@ function playerStateToBinary(state: PlayerSnapshot): any {
 }
 
 function playerStateFromBinary(binary: any): PlayerSnapshot {
-    return JSON.parse(binary);
+    const playerState: PlayerSnapshot = JSON.parse(binary);
+    return playerState;
 }
 
 export {

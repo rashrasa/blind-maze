@@ -1,8 +1,8 @@
 // Standalone server component capable of accepting connections from game clients
 
 import { WebSocketServer, WebSocket } from 'ws';
-import { GameState } from '../types/game_types';
-import { gameStateFromBinary, gameStateToBinary } from '../types/communication';
+import { GameState, MapLayout, PlayerSnapshot } from '../types/game_types';
+import { gameStateFromBinary, gameStateToBinary, playerStateFromBinary } from '../types/communication';
 import config from './server-config.json';
 import { generateMap } from '../generation/map_generation';
 
@@ -10,11 +10,13 @@ import { generateMap } from '../generation/map_generation';
 const ip: string = config.host
 const port: number = config.port
 
-const map = generateMap({
+const map: MapLayout = generateMap({
     width: config.mapWidth,
     height: config.mapHeight,
     seed: config.mapSeed
 })
+
+const playerStates = new Map<string, PlayerSnapshot>()
 
 const server = new WebSocketServer({
     port: 3001
@@ -23,7 +25,7 @@ const server = new WebSocketServer({
 let connections: WebSocket[] = []
 
 var state: GameState = {
-    playerStates: [],
+    playerStates: playerStates,
     map: map
 }
 
@@ -35,7 +37,8 @@ server.on("connection", (connection) => {
 
     // Handle inputs
     connection.on('message', (event) => {
-        state = gameStateFromBinary(event)
+        let playerState = playerStateFromBinary(event)
+        state.playerStates.set(playerState.player.id, playerState)
         updateClients()
     })
 
@@ -64,24 +67,24 @@ server.on("wsClientError", (error) => {
 })
 
 
-async function serverLoop() {
-    while (open) {
-        // Emit constant rate of current states
-        const startTimeMs = Date.now();
-        const TICK_RATE = config.tickRate;
-        let updates = 0;
+// Emit constant rate of current states
+const startTimeMs = Date.now();
+const TICK_RATE = config.tickRate;
+var updates = 0;
 
-        if (
-            (Date.now() - startTimeMs) / 1000 * TICK_RATE > updates
-        ) {
+setInterval(() => {
+    if (
+        (Date.now() - startTimeMs) / 1000 * TICK_RATE > updates
+    ) {
+        setTimeout(() => {
             updateClients()
             updates++;
             if (updates % 60 == 0) {
                 console.log(`Emitted ${updates} updates`)
             }
-        }
+        }, 0)
     }
-}
+}, 0)
 
 function updateClients() {
     // Update states
