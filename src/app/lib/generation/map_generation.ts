@@ -17,8 +17,8 @@ function generateMap(config: MapConfiguration): MapLayout {
             else {
                 row.push(0)
             }
-            tiles.push(row)
         }
+        tiles.push(row)
     }
     return {
         width: tiles.length,
