@@ -1,7 +1,7 @@
 // Standalone server component capable of accepting connections from game clients
 
 import { WebSocketServer, WebSocket } from 'ws';
-import { GameState, MapLayout, PlayerSnapshot } from '../types/game_types';
+import { GameState, MapLayout, PlayerSnapshot, TileType } from '../types/game_types';
 import { gameStateFromBinary, gameStateToBinary, playerStateFromBinary } from '../types/communication';
 import config from './server-config.json';
 import { generateMap } from '../generation/map_generation';
@@ -16,7 +16,7 @@ const map: MapLayout = generateMap({
     seed: config.mapSeed
 })
 
-const playerStates: PlayerSnapshot[] = []
+const playerStates: Map<string, PlayerSnapshot> = new Map()
 
 const server = new WebSocketServer({
     port: 3001
@@ -39,12 +39,12 @@ server.on("connection", (connection) => {
     connection.on('message', (event) => {
         let playerState = playerStateFromBinary(event)
         console.log(`Received state: ${event}`)
-        playerStates.push(playerState)
+        playerStates.set(playerState.player.id, playerState)
         updateClients()
     })
 
     connection.on("close", (event) => {
-        connections.splice(connections.indexOf(connection))
+        connections.splice(connections.indexOf(connection), 1)
         console.log(`Connection closed with ${connection.url}`)
     })
 
@@ -86,8 +86,17 @@ setInterval(() => {
 }, 0)
 
 function updateClients() {
+    switch (state.map.tiles[0][0]) {
+        case TileType.EMPTY:
+            state.map.tiles[0][0] = TileType.WALL
+            break;
+        case TileType.WALL:
+            state.map.tiles[0][0] = TileType.EMPTY
+            break;
+    }
     // Update states
     server.clients.forEach(async (client) => {
+
         client.send(gameStateToBinary(state))
     })
 }

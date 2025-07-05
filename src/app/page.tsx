@@ -6,10 +6,10 @@ import NavBar from "./components/navbar/navbar";
 export default function Home() {
   return (
     <div className="">
-      <main className="">
-        <NavBar/>
+      <main className="z-0">
+        <NavBar />
         <div className="">
-          <GameContainer/>
+          <GameContainer />
         </div>
       </main>
       <footer className="row-start-3 flex gap-6 flex-wrap items-center justify-center">

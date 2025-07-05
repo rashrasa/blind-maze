@@ -11,7 +11,7 @@ function generateMap(config: MapConfiguration): MapLayout {
     for (let i = 0; i < height; i++) {
         let row: TileType[] = []
         for (let j = 0; j < width; j++) {
-            if (i == 0 || i == height - 1 || j == 0 || j == width - 1) {
+            if (i == 0 || i == height - 1 || j == 0 || j == width - 1 || i == j) {
                 row.push(1)
             }
             else {
@@ -24,7 +24,7 @@ function generateMap(config: MapConfiguration): MapLayout {
         width: tiles.length,
         height: tiles[0]?.length || 0,
         tiles: tiles
-    } as const
+    }
 }
 
 export { generateMap };

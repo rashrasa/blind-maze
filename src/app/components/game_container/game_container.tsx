@@ -2,7 +2,7 @@
 
 import GameClient from "@/app/lib/client/game_client";
 
-export default function GameContainer(){
+export default function GameContainer() {
     return (
         <div
             className="border-2 border-black mx-auto mt-52"
@@ -11,7 +11,7 @@ export default function GameContainer(){
                 height: "600px"
             }}
         >
-            <GameClient />
+            <GameClient viewPortWidth={600} viewPortHeight={600} />
         </div>
     )
 }
