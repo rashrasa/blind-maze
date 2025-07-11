@@ -28,6 +28,7 @@ interface PlayerSnapshot {
     isLeader: boolean;
     player: Player;
     position: { x: number; y: number };
+    velocity: { x: number; y: number };
     snapshotTimestampMs: number;
 }
 

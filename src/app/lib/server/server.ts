@@ -86,18 +86,23 @@ setInterval(() => {
 }, 0)
 
 function updateClients() {
-    switch (state.map.tiles[0][0]) {
-        case TileType.EMPTY:
-            state.map.tiles[0][0] = TileType.WALL
-            break;
-        case TileType.WALL:
-            state.map.tiles[0][0] = TileType.EMPTY
-            break;
+    let updatedGameState = state;
+    for (const [playerId, playerState] of state.playerStates.entries()) {
+        let updatedState: PlayerSnapshot = {
+            isLeader: playerState.isLeader,
+            player: playerState.player,
+            position: {
+                x: playerState.position.x + playerState.velocity.x,
+                y: playerState.position.y + playerState.velocity.y
+            },
+            velocity: playerState.velocity,
+            snapshotTimestampMs: Date.now()
+        }
+        updatedGameState.playerStates.set(playerId, updatedState)
     }
     // Update states
     server.clients.forEach(async (client) => {
-
-        client.send(gameStateToBinary(state))
+        client.send(gameStateToBinary(updatedGameState))
     })
 }
 

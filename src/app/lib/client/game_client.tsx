@@ -1,8 +1,9 @@
 "use client";
-import React, { ReactNode, useRef, useState } from "react";
+import React, { ReactNode, useEffect, useRef, useState } from "react";
 import { GameState, Player, PlayerSnapshot, TileType } from "../types/game_types";
 import { gameStateFromBinary, gameStateToBinary, playerStateToBinary } from "../types/communication";
 import WebSocketAsPromised from "websocket-as-promised";
+
 
 enum GameClientMenu {
     MAIN_MENU,
@@ -26,6 +27,9 @@ const GameClient: React.FC<GameClientProps> = (props) => {
     const viewPortWidth = props.viewPortWidth
     const serverInput = useRef<HTMLTextAreaElement>(null);
     const error = useRef<string>(null)
+
+    const PLAYER_SPEED = 0.5
+
     const thisPlayer: Player = {
         id: "abcde",
         displayName: "Player 0",
@@ -42,13 +46,27 @@ const GameClient: React.FC<GameClientProps> = (props) => {
         player: thisPlayer,
         isLeader: false,
         position: {
-            x: 3.5,
-            y: 2.5
+            x: 1.5,
+            y: 1.5
+        },
+        velocity: {
+            x: 0,
+            y: 0
         },
         snapshotTimestampMs: Date.now()
     })
 
     const [gameStateSnapshot, setGameStateSnapshot] = useState<GameState | null>(null);
+
+    useEffect(() => {
+        window.addEventListener("keydown", handleKeyDown);
+        window.addEventListener("keyup", handleKeyUp);
+
+        return () => {
+            window.removeEventListener("keydown", handleKeyDown)
+            window.removeEventListener("keyup", handleKeyUp)
+        }
+    })
     switch (state.menu) {
         case GameClientMenu.MAIN_MENU: {
             return (
@@ -110,9 +128,10 @@ const GameClient: React.FC<GameClientProps> = (props) => {
                 <div></div>
             );
         case GameClientMenu.GAME_SCREEN:
-
             return (
-                <div className="bg-black w-full h-full">
+                <div
+                    className="bg-black w-full h-full"
+                >
                     {/* Z = 10 */}
                     <span className="absolute z-10 text-gray-300">Connected to: {state?.server?.url.substring("ws://".length)} <span className="cursor-pointer text-red-400"
                         onClick={() => {
@@ -133,29 +152,95 @@ const GameClient: React.FC<GameClientProps> = (props) => {
             );
 
     }
-}
+    async function handleKeyUp(event: KeyboardEvent) {
+        const inputKey = event.code
+        let velocity;
+        switch (inputKey) {
+            case "ArrowUp":
+                velocity = {
+                    x: playerState.velocity.x,
+                    y: playerState.velocity.y + PLAYER_SPEED
+                }
+                break;
+            case "ArrowDown":
+                velocity = {
+                    x: playerState.velocity.x,
+                    y: playerState.velocity.y - PLAYER_SPEED
+                }
+                break;
+            case "ArrowLeft":
+                velocity = {
+                    x: playerState.velocity.x + PLAYER_SPEED,
+                    y: playerState.velocity.y
+                }
+                break;
+            case "ArrowRight":
+                velocity = {
+                    x: playerState.velocity.x - PLAYER_SPEED,
+                    y: playerState.velocity.y
+                }
+                break;
+            default:
+                return;
+        }
+        let newState = {
+            player: thisPlayer,
+            isLeader: false,
+            position: {
+                x: playerState.position.x,
+                y: playerState.position.y
+            },
+            velocity: velocity,
+            snapshotTimestampMs: Date.now()
+        }
+        setPlayerState(newState)
+        sendUpdatedState(state.server!, newState)
+    }
 
-// Error with return to main menu button
-function buildErrorScreen(error: string): ReactNode {
-    return (
-        <div>
-            <div>
-                <p className="text-center pt-20">
-                    Could not connect to server.
-                </p>
-            </div>
-        </div>
-    )
-}
-
-function showInformationDialog(message: string, confirmText: string): ReactNode {
-    return (
-        <div className="w-screen h-screen bg-blend-color-burn bg-gray-700">
-            <div className="flex flex-col w-60 h-60">
-
-            </div>
-        </div>
-    )
+    async function handleKeyDown(event: KeyboardEvent) {
+        const inputKey = event.code
+        let velocity;
+        switch (inputKey) {
+            case "ArrowUp":
+                velocity = {
+                    x: playerState.velocity.x,
+                    y: playerState.velocity.y - PLAYER_SPEED
+                }
+                break;
+            case "ArrowDown":
+                velocity = {
+                    x: playerState.velocity.x,
+                    y: playerState.velocity.y + PLAYER_SPEED
+                }
+                break;
+            case "ArrowLeft":
+                velocity = {
+                    x: playerState.velocity.x - PLAYER_SPEED,
+                    y: playerState.velocity.y
+                }
+                break;
+            case "ArrowRight":
+                velocity = {
+                    x: playerState.velocity.x + PLAYER_SPEED,
+                    y: playerState.velocity.y
+                }
+                break;
+            default:
+                return;
+        }
+        let newState = {
+            player: thisPlayer,
+            isLeader: false,
+            position: {
+                x: playerState.position.x,
+                y: playerState.position.y
+            },
+            velocity: velocity,
+            snapshotTimestampMs: Date.now()
+        }
+        setPlayerState(newState)
+        sendUpdatedState(state.server!, newState)
+    }
 }
 
 async function connectToServer(server: string | null): Promise<WebSocket | null> {
@@ -170,15 +255,22 @@ async function sendUpdatedState(server: WebSocket, state: PlayerSnapshot) {
 }
 
 function renderGame(state: GameState, thisPlayer: PlayerSnapshot, viewPortWidthPx: number, viewPortHeightPx: number): ReactNode {
-    const PIXELS_PER_TILE = 25
-    const PLAYER_SQUARE_LENGTH_TILES = 0.25
+    const PIXELS_PER_TILE = 30
+    const PLAYER_SQUARE_LENGTH_TILES = 2
     //const CENTER_X = thisPlayer.position.x
     //const CENTER_Y = thisPlayer.position.y
-    const CENTER_X = 1.5
-    const CENTER_Y = 1.9
+    const CENTER_X = thisPlayer.position.x
+    const CENTER_Y = thisPlayer.position.y
 
     const tiles: TileType[][] = state.map.tiles;
-    const players: Map<string, PlayerSnapshot> = state.playerStates;
+    const players: Map<string, PlayerSnapshot> = new Map();
+    /* if (state.playerStates != undefined && state.playerStates != null) {
+        for (let [playerId, player] of state.playerStates.entries()) {
+            players.set(playerId, player)
+        }
+    } */
+
+    players.set(thisPlayer.player.id, thisPlayer)
 
     const tileElements: ReactNode[] = []
     const playerElements: ReactNode[] = []
@@ -193,7 +285,8 @@ function renderGame(state: GameState, thisPlayer: PlayerSnapshot, viewPortWidthP
                     x={viewPortWidthPx / 2 + (-CENTER_X + j) * PIXELS_PER_TILE}
                     width={PIXELS_PER_TILE}
                     height={PIXELS_PER_TILE}
-                    className="absolute border-black border box-border"
+                    z={0}
+                    className="absolute"
                     style={{
                         fill: tiles[i][j] ? "white" : "black",
                         stroke: "black",
@@ -204,27 +297,29 @@ function renderGame(state: GameState, thisPlayer: PlayerSnapshot, viewPortWidthP
         }
     }
 
-    const playerStates = Object.values(players)
+    const playerStates: PlayerSnapshot[] = Object.values(players)
+    playerStates.push(thisPlayer)
 
     for (let i = 0; i < playerStates.length; i++) {
         const player = playerStates[i]
-        console.log(`Players: ${player}`)
         if (player == undefined) {
-            console.log("WARNING: Undefined player object received.")
+            console.warn("WARNING: Undefined player object received.")
             continue;
         }
         const playerX = player.position.x
         const playerY = player.position.y
+        console.log(`Player: (${playerStates[i].position.x}, ${playerStates[i].position.y}),\nRendered position: (${viewPortWidthPx / 2 + (-CENTER_X + playerX) * PIXELS_PER_TILE}px, ${viewPortHeightPx / 2 + (-CENTER_Y + playerY) * PIXELS_PER_TILE}px)`)
 
         playerElements.push(
             <circle
-                y={((CENTER_Y - playerY) - PLAYER_SQUARE_LENGTH_TILES * PIXELS_PER_TILE)}
-                x={((CENTER_X - playerX) - PLAYER_SQUARE_LENGTH_TILES * PIXELS_PER_TILE)}
-                radius={PLAYER_SQUARE_LENGTH_TILES * PIXELS_PER_TILE / 2}
-                className=" absolute"
-                style={{
-                    fill: "bg-green-100",
-                }}>
+                cy={viewPortHeightPx / 2 + (-CENTER_Y + playerY) * PIXELS_PER_TILE}
+                cx={viewPortWidthPx / 2 + (-CENTER_X + playerX) * PIXELS_PER_TILE}
+                r={PLAYER_SQUARE_LENGTH_TILES * PIXELS_PER_TILE / 2}
+                z={10}
+                stroke="white"
+                strokeWidth={1}
+                fill="green"
+                className="absolute">
 
             </circle>
         )
@@ -235,12 +330,11 @@ function renderGame(state: GameState, thisPlayer: PlayerSnapshot, viewPortWidthP
             maxWidth: `${viewPortWidthPx}px`,
             maxHeight: `${viewPortHeightPx}px`,
         }}>
-        {...playerElements}
         {...tileElements}
+        {...playerElements}
     </svg>
 
     return rootElement
-
 }
 
 export default GameClient;
