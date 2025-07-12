@@ -5,6 +5,7 @@ import { GameState, MapLayout, PlayerSnapshot, TileType } from '../types/game_ty
 import { gameStateFromBinary, gameStateToBinary, playerStateFromBinary } from '../types/communication';
 import config from './server-config.json';
 import { generateMap } from '../generation/map_generation';
+import { emitKeypressEvents } from 'node:readline';
 
 // Simple websocket server
 const ip: string = config.host
@@ -16,16 +17,15 @@ const map: MapLayout = generateMap({
     seed: config.mapSeed
 })
 
-const playerStates: Map<string, PlayerSnapshot> = new Map()
-
 const server = new WebSocketServer({
     port: 3001
 });
 
-const connections: WebSocket[] = []
+const playerConnections: Map<WebSocket, string> = new Map()
+const playerStates: Map<string, PlayerSnapshot> = new Map()
 
-const state: GameState = {
-    playerStates: playerStates,
+var state: GameState = {
+    playerStates: [],
     map: map
 }
 
@@ -33,22 +33,26 @@ var open = true;
 
 server.on("connection", (connection) => {
     console.log(`Established connection with ${connection.url}`)
-    connections.push(connection)
 
     // Handle inputs
     connection.on('message', (event) => {
-        let playerState = playerStateFromBinary(event)
+        let playerState: PlayerSnapshot = playerStateFromBinary(event)
         console.log(`Received state: ${event}`)
+        if (playerConnections.get(connection) == null) {
+            playerConnections.set(connection, playerState.player.id)
+        }
         playerStates.set(playerState.player.id, playerState)
-        updateClients()
+
+        updateStateAndClients()
     })
 
     connection.on("close", (event) => {
-        connections.splice(connections.indexOf(connection), 1)
+        if (playerConnections.get(connection) != undefined) playerStates.delete(playerConnections.get(connection)!)
+        playerConnections.delete(connection)
+        updateStateAndClients()
         console.log(`Connection closed with ${connection.url}`)
     })
 
-    updateClients()
     console.log(`Connection ready with ${connection.url}.`)
 })
 
@@ -76,40 +80,59 @@ setInterval(() => {
         (Date.now() - startTimeMs) / 1000 * TICK_RATE > updates
     ) {
         setTimeout(() => {
-            updateClients()
+            tick(1000.0 / TICK_RATE)
             updates++;
-            if (updates % 60 == 0) {
-                console.log(`Emitted ${updates} updates`)
-            }
         }, 0)
     }
 }, 0)
 
-function updateClients() {
-    let updatedGameState = state;
-    for (const [playerId, playerState] of state.playerStates.entries()) {
+function tick(milliseconds: number) {
+    for (const [playerId, playerState] of playerStates) {
         let updatedState: PlayerSnapshot = {
             isLeader: playerState.isLeader,
             player: playerState.player,
             position: {
-                x: playerState.position.x + playerState.velocity.x,
-                y: playerState.position.y + playerState.velocity.y
+                x: playerState.position.x + playerState.velocity.x * milliseconds / 1000.0,
+                y: playerState.position.y + playerState.velocity.y * milliseconds / 1000.0
             },
             velocity: playerState.velocity,
             snapshotTimestampMs: Date.now()
         }
-        updatedGameState.playerStates.set(playerId, updatedState)
+        playerStates.set(playerId, updatedState)
     }
     // Update states
+    updateStateAndClients()
+}
+
+async function updateStateAndClients() {
+    state.playerStates = Object.values(playerStates)
     server.clients.forEach(async (client) => {
-        client.send(gameStateToBinary(updatedGameState))
+        client.send(gameStateToBinary(state))
     })
 }
 
-console.log(`Server initialized at ${JSON.stringify(server.address())}`)
+// Accept input
+emitKeypressEvents(process.stdin)
+if (process.stdin.setRawMode != null) {
+    process.stdin.setRawMode(true);
+}
+process.stdin.on('keypress', async (str, key) => {
+    // console.log(key)
+    switch (key.sequence) {
+        case "\x13":
+            console.log(state)
+            console.log(Object.values(playerStates))
+            console.log(Object.values(playerConnections))
+            break;
+        case "\x03":
+            console.log("Closed server!")
+            open = false
+            server.close()
+            process.exit(0);
+        default:
+            break;
+    }
+})
 
-process.on("SIGINT", function () {
-    console.log("Closed server!")
-    server.close()
-    process.exit(1);
-});
+
+console.log(`Server initialized at ${JSON.stringify(server.address())}\nUse:\n\tCTRL+C to exit\n\tCTRL+S to print current game state`)

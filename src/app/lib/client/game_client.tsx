@@ -21,6 +21,8 @@ interface GameClientProps {
     viewPortWidth: number
 }
 
+var keysPressed: Map<string, boolean> = new Map()
+const PLAYER_SPEED = 2
 
 const GameClient: React.FC<GameClientProps> = (props) => {
     const viewPortHeight = props.viewPortHeight
@@ -28,22 +30,18 @@ const GameClient: React.FC<GameClientProps> = (props) => {
     const serverInput = useRef<HTMLTextAreaElement>(null);
     const error = useRef<string>(null)
 
-    const PLAYER_SPEED = 0.5
-
-    const thisPlayer: Player = {
-        id: "abcde",
-        displayName: "Player 0",
-        username: "username",
-        avatarUrl: "google.ca"
-    }
-
     const [state, setState] = useState<GameClientState>({
         menu: GameClientMenu.MAIN_MENU,
         server: null,
     });
 
     const [playerState, setPlayerState] = useState<PlayerSnapshot>({
-        player: thisPlayer,
+        player: {
+            id: "abcde",
+            displayName: "Player 0",
+            username: "username",
+            avatarUrl: "google.ca"
+        },
         isLeader: false,
         position: {
             x: 1.5,
@@ -94,27 +92,8 @@ const GameClient: React.FC<GameClientProps> = (props) => {
                         onClick={
                             async (event) => {
                                 let server = await connectToServer("ws://" + serverInput?.current?.value)
-                                let initialState = false
                                 if (server == null) {
                                     error.current = "Error: Failed to connect to server."
-                                }
-                                else {
-                                    server.addEventListener("message", (ev) => {
-                                        let data = gameStateFromBinary(ev.data)
-                                        if (!initialState) {
-                                            initialState = true;
-                                            console.log(data)
-                                        }
-                                        setGameStateSnapshot(data)
-                                    })
-                                    server.addEventListener("close", () => {
-                                        setState({
-                                            server: null,
-                                            menu: GameClientMenu.MAIN_MENU
-                                        })
-                                    })
-                                    await sendUpdatedState(server, playerState)
-                                    setState({ server: server, menu: GameClientMenu.GAME_SCREEN })
                                 }
                             }
                         }>
@@ -144,7 +123,7 @@ const GameClient: React.FC<GameClientProps> = (props) => {
                     </span>
                     {/* Z = 0 */}
                     {(gameStateSnapshot != null) ?
-                        renderGame(gameStateSnapshot, playerState, viewPortWidth, viewPortHeight) :
+                        renderGame(gameStateSnapshot, playerState.player.id, viewPortWidth, viewPortHeight) :
                         <span className="relative text-white" style={{ top: "250px", left: "155px" }}>
                             Initial game state not been received yet.
                         </span>}
@@ -152,8 +131,13 @@ const GameClient: React.FC<GameClientProps> = (props) => {
             );
 
     }
-    async function handleKeyUp(event: KeyboardEvent) {
+    function handleKeyUp(event: KeyboardEvent) {
         const inputKey = event.code
+        const previous = keysPressed.get(inputKey)
+        if (previous == undefined || previous == false) {
+            return;
+        }
+        console.log(keysPressed)
         let velocity;
         switch (inputKey) {
             case "ArrowUp":
@@ -161,30 +145,34 @@ const GameClient: React.FC<GameClientProps> = (props) => {
                     x: playerState.velocity.x,
                     y: playerState.velocity.y + PLAYER_SPEED
                 }
+                keysPressed.set("ArrowUp", false)
                 break;
             case "ArrowDown":
                 velocity = {
                     x: playerState.velocity.x,
                     y: playerState.velocity.y - PLAYER_SPEED
                 }
+                keysPressed.set("ArrowDown", false)
                 break;
             case "ArrowLeft":
                 velocity = {
                     x: playerState.velocity.x + PLAYER_SPEED,
                     y: playerState.velocity.y
                 }
+                keysPressed.set("ArrowLeft", false)
                 break;
             case "ArrowRight":
                 velocity = {
                     x: playerState.velocity.x - PLAYER_SPEED,
                     y: playerState.velocity.y
                 }
+                keysPressed.set("ArrowRight", false)
                 break;
             default:
                 return;
         }
         let newState = {
-            player: thisPlayer,
+            player: playerState.player,
             isLeader: false,
             position: {
                 x: playerState.position.x,
@@ -193,12 +181,16 @@ const GameClient: React.FC<GameClientProps> = (props) => {
             velocity: velocity,
             snapshotTimestampMs: Date.now()
         }
-        setPlayerState(newState)
-        sendUpdatedState(state.server!, newState)
+        updateStateAndServer(newState)
     }
 
-    async function handleKeyDown(event: KeyboardEvent) {
+    function handleKeyDown(event: KeyboardEvent) {
         const inputKey = event.code
+        console.log(keysPressed)
+        const previous = keysPressed.get(inputKey)
+        if (previous != undefined && previous == true) {
+            return;
+        }
         let velocity;
         switch (inputKey) {
             case "ArrowUp":
@@ -206,30 +198,34 @@ const GameClient: React.FC<GameClientProps> = (props) => {
                     x: playerState.velocity.x,
                     y: playerState.velocity.y - PLAYER_SPEED
                 }
+                keysPressed.set("ArrowUp", true)
                 break;
             case "ArrowDown":
                 velocity = {
                     x: playerState.velocity.x,
                     y: playerState.velocity.y + PLAYER_SPEED
                 }
+                keysPressed.set("ArrowDown", true)
                 break;
             case "ArrowLeft":
                 velocity = {
                     x: playerState.velocity.x - PLAYER_SPEED,
                     y: playerState.velocity.y
                 }
+                keysPressed.set("ArrowLeft", true)
                 break;
             case "ArrowRight":
                 velocity = {
                     x: playerState.velocity.x + PLAYER_SPEED,
                     y: playerState.velocity.y
                 }
+                keysPressed.set("ArrowRight", true)
                 break;
             default:
                 return;
         }
-        let newState = {
-            player: thisPlayer,
+        let updatedState = {
+            player: playerState.player,
             isLeader: false,
             position: {
                 x: playerState.position.x,
@@ -238,39 +234,58 @@ const GameClient: React.FC<GameClientProps> = (props) => {
             velocity: velocity,
             snapshotTimestampMs: Date.now()
         }
-        setPlayerState(newState)
-        sendUpdatedState(state.server!, newState)
+        updateStateAndServer(updatedState)
+    }
+
+    async function connectToServer(serverLocation: string | null): Promise<WebSocket | null> {
+        if (serverLocation == null) return null;
+        let connection = new WebSocketAsPromised(serverLocation!);
+        let result = await (connection.open());
+        let server = connection.ws
+        let initialState = false
+        if (server == null) {
+            return null
+        }
+        else {
+            server.addEventListener("message", (ev) => {
+                let data = gameStateFromBinary(ev.data)
+
+                if (!initialState) {
+                    initialState = true;
+                    console.log(`Received state:` + data)
+                }
+                setGameStateSnapshot(data)
+            })
+            server.addEventListener("close", () => {
+                setState({
+                    server: null,
+                    menu: GameClientMenu.MAIN_MENU
+                })
+            })
+            setState({ server: server, menu: GameClientMenu.GAME_SCREEN })
+        }
+        return connection.ws;
+    }
+    async function updateStateAndServer(updatedState: PlayerSnapshot) {
+        setPlayerState(updatedState)
+        state.server!.send(playerStateToBinary(updatedState));
     }
 }
 
-async function connectToServer(server: string | null): Promise<WebSocket | null> {
-    if (server == null) return null;
-    let connection = new WebSocketAsPromised(server!);
-    let result = await (connection.open());
-    return connection.ws;
-}
-
-async function sendUpdatedState(server: WebSocket, state: PlayerSnapshot) {
-    server.send(playerStateToBinary(state));
-}
-
-function renderGame(state: GameState, thisPlayer: PlayerSnapshot, viewPortWidthPx: number, viewPortHeightPx: number): ReactNode {
+function renderGame(state: GameState, thisPlayerId: string, viewPortWidthPx: number, viewPortHeightPx: number): ReactNode {
     const PIXELS_PER_TILE = 30
-    const PLAYER_SQUARE_LENGTH_TILES = 2
-    //const CENTER_X = thisPlayer.position.x
-    //const CENTER_Y = thisPlayer.position.y
-    const CENTER_X = thisPlayer.position.x
-    const CENTER_Y = thisPlayer.position.y
+    const PLAYER_SQUARE_LENGTH_TILES = .9
+
+    const playerStates: PlayerSnapshot[] = state.playerStates
+
+    const thisPlayer: PlayerSnapshot | undefined = playerStates.find((snapshot) => {
+        return snapshot.player.id === thisPlayerId
+    })
+
+    const CENTER_X = thisPlayer?.position.x ?? 7.5
+    const CENTER_Y = thisPlayer?.position.y ?? 7.5
 
     const tiles: TileType[][] = state.map.tiles;
-    const players: Map<string, PlayerSnapshot> = new Map();
-    /* if (state.playerStates != undefined && state.playerStates != null) {
-        for (let [playerId, player] of state.playerStates.entries()) {
-            players.set(playerId, player)
-        }
-    } */
-
-    players.set(thisPlayer.player.id, thisPlayer)
 
     const tileElements: ReactNode[] = []
     const playerElements: ReactNode[] = []
@@ -297,18 +312,18 @@ function renderGame(state: GameState, thisPlayer: PlayerSnapshot, viewPortWidthP
         }
     }
 
-    const playerStates: PlayerSnapshot[] = Object.values(players)
-    playerStates.push(thisPlayer)
+    if (thisPlayer) playerStates.push(thisPlayer)
 
-    for (let i = 0; i < playerStates.length; i++) {
-        const player = playerStates[i]
+    for (const player of playerStates) {
         if (player == undefined) {
             console.warn("WARNING: Undefined player object received.")
             continue;
         }
         const playerX = player.position.x
         const playerY = player.position.y
-        console.log(`Player: (${playerStates[i].position.x}, ${playerStates[i].position.y}),\nRendered position: (${viewPortWidthPx / 2 + (-CENTER_X + playerX) * PIXELS_PER_TILE}px, ${viewPortHeightPx / 2 + (-CENTER_Y + playerY) * PIXELS_PER_TILE}px)`)
+        const speedX = player.velocity.x
+        const speedY = player.velocity.y
+        console.log(`Player: (${playerX}, ${playerY}), Velocity(${speedX}, ${speedY}),\nRendered position: (${viewPortWidthPx / 2 + (-CENTER_X + playerX) * PIXELS_PER_TILE}px, ${viewPortHeightPx / 2 + (-CENTER_Y + playerY) * PIXELS_PER_TILE}px)`)
 
         playerElements.push(
             <circle
