@@ -1,8 +1,9 @@
 "use client";
 import React, { ReactNode, useEffect, useRef, useState } from "react";
-import { GameState, PlayerSnapshot, TileType } from "../types/game_types";
+import { GameState, Player, PlayerSnapshot, TileType } from "../types/game_types";
 import { gameStateFromBinary, gameStateToBinary, playerStateToBinary } from "../types/communication";
 import WebSocketAsPromised from "websocket-as-promised";
+import "node:crypto";
 
 
 enum GameClientMenu {
@@ -22,7 +23,7 @@ interface GameClientProps {
 }
 
 var keysPressed: Map<string, boolean> = new Map()
-const PLAYER_SPEED = 2
+const PLAYER_SPEED = 4
 
 const GameClient: React.FC<GameClientProps> = (props) => {
     const viewPortHeight = props.viewPortHeight
@@ -35,24 +36,13 @@ const GameClient: React.FC<GameClientProps> = (props) => {
         server: null,
     });
 
-    const [playerState, setPlayerState] = useState<PlayerSnapshot>({
-        player: {
-            id: "abcde",
-            displayName: "Player 0",
-            username: "username",
-            avatarUrl: "google.ca"
-        },
-        isLeader: false,
-        position: {
-            x: 1.5,
-            y: 1.5
-        },
-        velocity: {
-            x: 0,
-            y: 0
-        },
-        snapshotTimestampMs: Date.now()
-    })
+    const playerId: string = crypto.randomUUID()
+    const player: Player = {
+        id: playerId,
+        displayName: "Player 0",
+        username: "username",
+        avatarUrl: "google.ca"
+    }
 
     const [gameStateSnapshot, setGameStateSnapshot] = useState<GameState | null>(null);
 
@@ -95,9 +85,6 @@ const GameClient: React.FC<GameClientProps> = (props) => {
                                 if (server == null) {
                                     error.current = "Error: Failed to connect to server."
                                 }
-                                else {
-                                    updateStateAndServer(server.ws!, playerState);
-                                }
                             }
                         }>
                         <span className="mx-20 my-20 text-center align-middle">Connect</span>
@@ -127,7 +114,7 @@ const GameClient: React.FC<GameClientProps> = (props) => {
                     </span>
                     {/* Z = 0 */}
                     {(gameStateSnapshot != null) ?
-                        renderGame(gameStateSnapshot, playerState.player.id, viewPortWidth, viewPortHeight) :
+                        renderGame(gameStateSnapshot, viewPortWidth, viewPortHeight) :
                         <span className="relative text-white" style={{ top: "250px", left: "155px" }}>
                             Initial game state not been received yet.
                         </span>}
@@ -135,9 +122,22 @@ const GameClient: React.FC<GameClientProps> = (props) => {
             );
 
     }
+    function getPlayerState(): PlayerSnapshot | null {
+        const currentState = gameStateSnapshot!.playerStates
+        let playerResult = currentState.find(playerState => {
+            return playerState.player.id === playerId
+        })
+        console.log(playerResult)
+        if (playerResult == undefined) return null;
+        return playerResult;
+    }
     function handleKeyUp(event: KeyboardEvent) {
         const inputKey = event.code
         const previous = keysPressed.get(inputKey)
+        let playerState = getPlayerState()
+        if (playerState == null) {
+            throw Error("Unexpected Error: thisPlayer state is null")
+        }
         if (previous == undefined || previous == false) {
             return;
         }
@@ -190,8 +190,11 @@ const GameClient: React.FC<GameClientProps> = (props) => {
 
     function handleKeyDown(event: KeyboardEvent) {
         const inputKey = event.code
-        console.log(keysPressed)
         const previous = keysPressed.get(inputKey)
+        let playerState = getPlayerState()
+        if (playerState == null) {
+            throw Error("Unexpected Error: thisPlayer state is null")
+        }
         if (previous != undefined && previous == true) {
             return;
         }
@@ -246,6 +249,19 @@ const GameClient: React.FC<GameClientProps> = (props) => {
         let connection = new WebSocketAsPromised(serverLocation!);
         let result = await (connection.open());
         let initialState = false
+        let intitalPlayerState = {
+            player: player,
+            isLeader: false,
+            position: {
+                x: 1.5,
+                y: 1.5
+            },
+            velocity: {
+                x: 0,
+                y: 0
+            },
+            snapshotTimestampMs: Date.now()
+        }
         if (connection.ws == null) {
             return null
         }
@@ -253,7 +269,7 @@ const GameClient: React.FC<GameClientProps> = (props) => {
             connection.ws.addEventListener("message", (ev) => {
                 let data = gameStateFromBinary(ev.data)
 
-                if (true || !initialState) {
+                if (!initialState) {
                     initialState = true;
                     console.log(`Received state:` + JSON.stringify(data))
                 }
@@ -267,92 +283,89 @@ const GameClient: React.FC<GameClientProps> = (props) => {
             })
             setState({ server: connection, menu: GameClientMenu.GAME_SCREEN })
         }
+        updateStateAndServer(connection.ws, intitalPlayerState)
         return connection;
     }
     async function updateStateAndServer(server: WebSocket, updatedState: PlayerSnapshot) {
-        setPlayerState(updatedState)
         server!.send(playerStateToBinary(updatedState));
     }
-}
 
-function renderGame(state: GameState, thisPlayerId: string, viewPortWidthPx: number, viewPortHeightPx: number): ReactNode {
-    const PIXELS_PER_TILE = 30
-    const PLAYER_SQUARE_LENGTH_TILES = .9
 
-    const playerStates: PlayerSnapshot[] = state.playerStates
+    function renderGame(state: GameState, viewPortWidthPx: number, viewPortHeightPx: number): ReactNode {
+        const PIXELS_PER_TILE = 30
+        const PLAYER_SQUARE_LENGTH_TILES = .9
 
-    const thisPlayer: PlayerSnapshot | undefined = playerStates.find((snapshot) => {
-        return snapshot.player.id === thisPlayerId
-    })
+        const playerStates: PlayerSnapshot[] = state.playerStates
 
-    const CENTER_X = thisPlayer?.position.x ?? 7.5
-    const CENTER_Y = thisPlayer?.position.y ?? 7.5
+        const thisPlayer: PlayerSnapshot | null = getPlayerState()
 
-    const tiles: TileType[][] = state.map.tiles;
+        const CENTER_X = thisPlayer?.position.x ?? 7.5
+        const CENTER_Y = thisPlayer?.position.y ?? 7.5
 
-    const tileElements: ReactNode[] = []
-    const playerElements: ReactNode[] = []
+        const tiles: TileType[][] = state.map.tiles;
 
-    // Row
-    for (let i = 0; i < tiles.length; i++) {
-        // Column
-        for (let j = 0; j < tiles[i].length; j++) {
-            tileElements.push(
-                <rect
-                    y={viewPortHeightPx / 2 + (-CENTER_Y + i) * PIXELS_PER_TILE}
-                    x={viewPortWidthPx / 2 + (-CENTER_X + j) * PIXELS_PER_TILE}
-                    width={PIXELS_PER_TILE}
-                    height={PIXELS_PER_TILE}
-                    z={0}
-                    className="absolute"
-                    style={{
-                        fill: tiles[i][j] ? "white" : "black",
-                        stroke: "black",
-                        strokeWidth: 1
-                    }}>
-                </rect >
+        const tileElements: ReactNode[] = []
+        const playerElements: ReactNode[] = []
+
+        // Row
+        for (let i = 0; i < tiles.length; i++) {
+            // Column
+            for (let j = 0; j < tiles[i].length; j++) {
+                tileElements.push(
+                    <rect
+                        y={viewPortHeightPx / 2 + (-CENTER_Y + i) * PIXELS_PER_TILE}
+                        x={viewPortWidthPx / 2 + (-CENTER_X + j) * PIXELS_PER_TILE}
+                        width={PIXELS_PER_TILE}
+                        height={PIXELS_PER_TILE}
+                        z={0}
+                        className="absolute"
+                        style={{
+                            fill: tiles[i][j] ? "white" : "black",
+                            stroke: "black",
+                            strokeWidth: 1
+                        }}>
+                    </rect >
+                )
+            }
+        }
+
+        for (const player of playerStates) {
+            if (player == undefined) {
+                console.warn("WARNING: Undefined player object received.")
+                continue;
+            }
+            const playerX = player.position.x
+            const playerY = player.position.y
+            const speedX = player.velocity.x
+            const speedY = player.velocity.y
+            //console.log(`Player: (${playerX}, ${playerY}), Velocity(${speedX}, ${speedY}),\nRendered position: (${viewPortWidthPx / 2 + (-CENTER_X + playerX) * PIXELS_PER_TILE}px, ${viewPortHeightPx / 2 + (-CENTER_Y + playerY) * PIXELS_PER_TILE}px)`)
+
+            playerElements.push(
+                <circle
+                    cy={viewPortHeightPx / 2 + (-CENTER_Y + playerY) * PIXELS_PER_TILE}
+                    cx={viewPortWidthPx / 2 + (-CENTER_X + playerX) * PIXELS_PER_TILE}
+                    r={PLAYER_SQUARE_LENGTH_TILES * PIXELS_PER_TILE / 2}
+                    z={10}
+                    stroke="white"
+                    strokeWidth={1}
+                    fill="green"
+                    className="absolute">
+
+                </circle>
             )
         }
+        const rootElement = <svg width={viewPortWidthPx} height={viewPortHeightPx}
+            className="relative"
+            style={{
+                maxWidth: `${viewPortWidthPx}px`,
+                maxHeight: `${viewPortHeightPx}px`,
+            }}>
+            {...tileElements}
+            {...playerElements}
+        </svg>
+
+        return rootElement
     }
-
-    if (thisPlayer) playerStates.push(thisPlayer)
-
-    for (const player of playerStates) {
-        if (player == undefined) {
-            console.warn("WARNING: Undefined player object received.")
-            continue;
-        }
-        const playerX = player.position.x
-        const playerY = player.position.y
-        const speedX = player.velocity.x
-        const speedY = player.velocity.y
-        //console.log(`Player: (${playerX}, ${playerY}), Velocity(${speedX}, ${speedY}),\nRendered position: (${viewPortWidthPx / 2 + (-CENTER_X + playerX) * PIXELS_PER_TILE}px, ${viewPortHeightPx / 2 + (-CENTER_Y + playerY) * PIXELS_PER_TILE}px)`)
-
-        playerElements.push(
-            <circle
-                cy={viewPortHeightPx / 2 + (-CENTER_Y + playerY) * PIXELS_PER_TILE}
-                cx={viewPortWidthPx / 2 + (-CENTER_X + playerX) * PIXELS_PER_TILE}
-                r={PLAYER_SQUARE_LENGTH_TILES * PIXELS_PER_TILE / 2}
-                z={10}
-                stroke="white"
-                strokeWidth={1}
-                fill="green"
-                className="absolute">
-
-            </circle>
-        )
-    }
-    const rootElement = <svg width={viewPortWidthPx} height={viewPortHeightPx}
-        className="relative"
-        style={{
-            maxWidth: `${viewPortWidthPx}px`,
-            maxHeight: `${viewPortHeightPx}px`,
-        }}>
-        {...tileElements}
-        {...playerElements}
-    </svg>
-
-    return rootElement
 }
 
 export default GameClient;

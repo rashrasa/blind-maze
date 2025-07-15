@@ -121,8 +121,8 @@ process.stdin.on('keypress', async (str, key) => {
     switch (key.sequence) {
         case "\x13":
             console.log(state)
-            console.log(Object.values(playerStates))
-            console.log(Object.values(playerConnections))
+            console.log(playerStates.values())
+            console.log(playerConnections.values())
             break;
         case "\x03":
             console.log("Closed server!")
