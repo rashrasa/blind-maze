@@ -24,6 +24,13 @@ interface GameClientProps {
 
 var keysPressed: Map<string, boolean> = new Map()
 const PLAYER_SPEED = 4
+const playerId: string = crypto.randomUUID()
+const player: Player = {
+    id: playerId,
+    displayName: "Player 0",
+    username: "username",
+    avatarUrl: "google.ca"
+}
 
 const GameClient: React.FC<GameClientProps> = (props) => {
     const viewPortHeight = props.viewPortHeight
@@ -35,14 +42,6 @@ const GameClient: React.FC<GameClientProps> = (props) => {
         menu: GameClientMenu.MAIN_MENU,
         server: null,
     });
-
-    const playerId: string = crypto.randomUUID()
-    const player: Player = {
-        id: playerId,
-        displayName: "Player 0",
-        username: "username",
-        avatarUrl: "google.ca"
-    }
 
     const [gameStateSnapshot, setGameStateSnapshot] = useState<GameState | null>(null);
 
