@@ -23,7 +23,7 @@ interface GameClientProps {
 }
 
 var keysPressed: Map<string, boolean> = new Map()
-const PLAYER_SPEED = 4
+const PLAYER_SPEED = 8
 const playerId: string = crypto.randomUUID()
 const player: Player = {
     id: playerId,
@@ -126,7 +126,6 @@ const GameClient: React.FC<GameClientProps> = (props) => {
         let playerResult = currentState.find(playerState => {
             return playerState.player.id === playerId
         })
-        console.log(playerResult)
         if (playerResult == undefined) return null;
         return playerResult;
     }
