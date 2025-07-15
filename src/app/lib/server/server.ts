@@ -8,7 +8,6 @@ import { generateMap } from '../generation/map_generation';
 import { emitKeypressEvents } from 'node:readline';
 
 // Simple websocket server
-const ip: string = config.host
 const port: number = config.port
 
 const map: MapLayout = generateMap({
@@ -18,7 +17,7 @@ const map: MapLayout = generateMap({
 })
 
 const server = new WebSocketServer({
-    port: 3001
+    port: port,
 });
 
 const playerConnections: Map<WebSocket, string> = new Map()
@@ -35,7 +34,7 @@ server.on("connection", (connection) => {
     console.log(`Established connection with ${connection.url}`)
 
     // Handle inputs
-    connection.on('message', (event) => {
+    connection.on('message', async (event) => {
         let playerState: PlayerSnapshot = playerStateFromBinary(event)
         console.log(`Received state: ${event}`)
         if (playerConnections.get(connection) == null) {
@@ -43,7 +42,7 @@ server.on("connection", (connection) => {
         }
         playerStates.set(playerState.player.id, playerState)
 
-        updateStateAndClients()
+        await updateStateAndClients()
     })
 
     connection.on("close", (event) => {
@@ -56,9 +55,7 @@ server.on("connection", (connection) => {
     console.log(`Connection ready with ${connection.url}.`)
 })
 
-server.on("error", (error) => {
-    console.log(error);
-})
+server.on("error", console.error)
 
 server.on("close", () => {
     console.log("Server closed.");
@@ -105,9 +102,12 @@ function tick(milliseconds: number) {
 }
 
 async function updateStateAndClients() {
-    state.playerStates = Object.values(playerStates)
+    let playerStateList = playerStates.values()
+    state.playerStates = playerStateList.toArray()
     server.clients.forEach(async (client) => {
-        client.send(gameStateToBinary(state))
+        client.send(gameStateToBinary(state), (error) => {
+            if (error) console.error(error)
+        })
     })
 }
 
