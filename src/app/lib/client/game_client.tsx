@@ -23,7 +23,7 @@ interface GameClientProps {
 }
 
 var keysPressed: Map<string, boolean> = new Map()
-const PLAYER_SPEED = 8
+const PLAYER_SPEED = 12
 const playerId: string = crypto.randomUUID()
 const player: Player = {
     id: playerId,
@@ -139,51 +139,23 @@ const GameClient: React.FC<GameClientProps> = (props) => {
         if (previous == undefined || previous == false) {
             return;
         }
-        console.log(keysPressed)
-        let velocity;
         switch (inputKey) {
             case "ArrowUp":
-                velocity = {
-                    x: playerState.velocity.x,
-                    y: playerState.velocity.y + PLAYER_SPEED
-                }
                 keysPressed.set("ArrowUp", false)
                 break;
             case "ArrowDown":
-                velocity = {
-                    x: playerState.velocity.x,
-                    y: playerState.velocity.y - PLAYER_SPEED
-                }
                 keysPressed.set("ArrowDown", false)
                 break;
             case "ArrowLeft":
-                velocity = {
-                    x: playerState.velocity.x + PLAYER_SPEED,
-                    y: playerState.velocity.y
-                }
                 keysPressed.set("ArrowLeft", false)
                 break;
             case "ArrowRight":
-                velocity = {
-                    x: playerState.velocity.x - PLAYER_SPEED,
-                    y: playerState.velocity.y
-                }
                 keysPressed.set("ArrowRight", false)
                 break;
             default:
                 return;
         }
-        let updatedState = {
-            player: playerState.player,
-            isLeader: playerState.isLeader,
-            position: {
-                x: playerState.position.x,
-                y: playerState.position.y
-            },
-            velocity: velocity,
-            snapshotTimestampMs: Date.now()
-        }
-        updateStateAndServer(state.server!.ws!, updatedState)
+        handleInputState();
     }
 
     function handleKeyDown(event: KeyboardEvent) {
@@ -196,39 +168,41 @@ const GameClient: React.FC<GameClientProps> = (props) => {
         if (previous != undefined && previous == true) {
             return;
         }
-        let velocity;
         switch (inputKey) {
             case "ArrowUp":
-                velocity = {
-                    x: playerState.velocity.x,
-                    y: playerState.velocity.y - PLAYER_SPEED
-                }
                 keysPressed.set("ArrowUp", true)
                 break;
             case "ArrowDown":
-                velocity = {
-                    x: playerState.velocity.x,
-                    y: playerState.velocity.y + PLAYER_SPEED
-                }
                 keysPressed.set("ArrowDown", true)
                 break;
             case "ArrowLeft":
-                velocity = {
-                    x: playerState.velocity.x - PLAYER_SPEED,
-                    y: playerState.velocity.y
-                }
                 keysPressed.set("ArrowLeft", true)
                 break;
             case "ArrowRight":
-                velocity = {
-                    x: playerState.velocity.x + PLAYER_SPEED,
-                    y: playerState.velocity.y
-                }
                 keysPressed.set("ArrowRight", true)
                 break;
             default:
                 return;
         }
+        handleInputState();
+    }
+
+    function handleInputState() {
+        let playerState = getPlayerState()
+        if (playerState == null) {
+            throw Error("Unexpected Error: thisPlayer state is null")
+        }
+        let velocity = {
+            x: 0,
+            y: 0
+        };
+        // refreshInputState();
+        if (keysPressed.get("ArrowUp")) velocity.y -= PLAYER_SPEED;
+        if (keysPressed.get("ArrowDown")) velocity.y += PLAYER_SPEED;
+        if (keysPressed.get("ArrowLeft")) velocity.x -= PLAYER_SPEED;
+        if (keysPressed.get("ArrowRight")) velocity.x += PLAYER_SPEED;
+
+
         let updatedState = {
             player: playerState.player,
             isLeader: playerState.isLeader,
