@@ -1,10 +1,10 @@
 // Standalone server component capable of accepting connections from game clients
 
 import { WebSocketServer, WebSocket } from 'ws';
-import { GameState, MapLayout, PlayerSnapshot, TileType } from '../types/game_types';
-import { gameStateFromBinary, gameStateToBinary, playerStateFromBinary } from '../types/communication';
+import { GameState, MapLayout, PlayerSnapshot, TileType } from '../../src/app/lib/types/game_types';
+import { gameStateFromBinary, gameStateToBinary, playerStateFromBinary } from '../../src/app/lib/types/communication';
 import config from './server-config.json';
-import { generateMap } from '../generation/map_generation';
+import { generateMap } from '../../src/app/lib/generation/map_generation';
 import { emitKeypressEvents } from 'node:readline';
 
 // Simple websocket server
@@ -83,6 +83,8 @@ setInterval(() => {
     }
 }, 0)
 
+
+// Main function for updating the game
 function tick(milliseconds: number) {
     for (const [playerId, playerState] of playerStates) {
         let updatedState: PlayerSnapshot = {
@@ -97,7 +99,7 @@ function tick(milliseconds: number) {
         }
         playerStates.set(playerId, updatedState)
     }
-    // Update states
+    // Update states - fire and forget
     updateStateAndClients()
 }
 
