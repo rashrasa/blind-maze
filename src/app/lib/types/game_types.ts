@@ -60,7 +60,7 @@ interface MapLayout {
 interface MapConfiguration {
     width: number;
     height: number;
-    seed: number;
+    seed: string;
 }
 
 export type {
