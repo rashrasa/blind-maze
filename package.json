@@ -7,7 +7,7 @@
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
-    "startServer": "npx tsx ./src/app/lib/server/server.ts"
+    "startServer": "npx tsx ./libraries/server/server.ts"
   },
   "dependencies": {
     "crypto": "^1.0.1",
