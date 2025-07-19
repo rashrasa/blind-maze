@@ -2,9 +2,73 @@
 
 export function generate2DMazeLayout(width: number, height: number, seed: string): boolean[][] {
     // Pseudo-random 32-bit number based on seed
-    let generationNumber = generateBinarySequence32(seed)
+    const generationNumber = generateBinarySequence32(seed)
+    const bitString = generationNumber.toString(2).padStart(32, "0")
 
-    return [[true, true, true]]
+    // Returns number of changed values (less than or equal to 'count')
+    function safeFill<T>(array: T[][], x1: number, y1: number, count: number, direction: Direction, item: T): number {
+        let updatedCount = 0;
+
+        let x2: number = x1;
+        let y2: number = y1;
+        switch (direction) {
+            case Direction.Up:
+                y1 = y1 - count;
+                break;
+            case Direction.Left:
+                x1 = x1 - count;
+                break;
+            case Direction.Down:
+                y2 = y2 + count;
+                break;
+            case Direction.Right:
+                x2 = x2 + count;
+                break;
+        }
+
+        x1 = Math.max(x1, 0)
+        x2 = Math.min(x2, array[0].length - 1)
+
+        y1 = Math.max(y1, 0)
+        y2 = Math.min(y2, array.length - 1)
+
+        for (let j = y1; j <= y2; j++) {
+            for (let i = x1; i <= x2; i++) {
+                if (array[j][i] != item) {
+                    array[j][i] = item;
+                    updatedCount++;
+                }
+
+            }
+        }
+        return updatedCount;
+    }
+
+    let result: boolean[][] = []
+    for (let i = 0; i < height; i++) {
+        result.push(new Array(width))
+        result[i].fill(false)
+    }
+    let step = 0
+    const leap = 5;
+    const stepsNeeded = width * height / 2
+    let x = width / 2;
+    let y = 1;
+    let direction = Direction.Down
+
+
+    while (step < stepsNeeded) {
+        let left: boolean = parseInt(bitString[step % 32]) == 1
+        if (left) {
+            direction = getLeftDirection(direction)
+        }
+        else {
+            direction = getRightDirection(direction)
+        }
+        step += safeFill(result, x, y, leap, direction, true)
+    }
+
+    return result
 }
 
 export function generateBinarySequence32(seed: string): number {
@@ -73,4 +137,50 @@ function linearFeedbackShiftRegister(number: Uint8Array, taps: number[]): Uint8A
     let dataView = new DataView(buffer);
     dataView.setInt32(0, integer)
     return new Uint8Array(buffer)
+}
+
+enum Direction {
+    Up,
+    Left,
+    Down,
+    Right,
+}
+
+function getOppositeDirection(direction: Direction): Direction {
+    switch (direction) {
+        case Direction.Up:
+            return Direction.Down;
+        case Direction.Down:
+            return Direction.Up;
+        case Direction.Left:
+            return Direction.Right
+        case Direction.Right:
+            return Direction.Left
+    }
+}
+
+function getRightDirection(direction: Direction): Direction {
+    switch (direction) {
+        case Direction.Up:
+            return Direction.Right;
+        case Direction.Down:
+            return Direction.Left;
+        case Direction.Left:
+            return Direction.Up
+        case Direction.Right:
+            return Direction.Down
+    }
+}
+
+function getLeftDirection(direction: Direction): Direction {
+    switch (direction) {
+        case Direction.Up:
+            return Direction.Left;
+        case Direction.Down:
+            return Direction.Right;
+        case Direction.Left:
+            return Direction.Down
+        case Direction.Right:
+            return Direction.Up
+    }
 }
