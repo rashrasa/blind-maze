@@ -36,7 +36,7 @@ export function generateBinarySequence32(seed: string): number {
     // Hash using linear-feedback shift register algorithm
 
     // 0-indexed, 31 will always be a tap for 32 bit numbers, 0 shouldnt be a tap
-    let taps = [11, 17, 23, 29]
+    let taps = [2, 5, 7, 21, 23, 29]
     let hashed = linearFeedbackShiftRegister(normalized, taps);
     let hashedView = new DataView(hashed.buffer, 0);
 
@@ -55,16 +55,16 @@ function linearFeedbackShiftRegister(number: Uint8Array, taps: number[]): Uint8A
     taps.sort().reverse()
     let binaryString = bufferView.getUint32(0, true).toString(2).padStart(32, "0");
     for (let i = 0; i < binaryString.length; i++) {
-        let tapResult = parseInt(binaryString[nBytes * 8 - 1]);
+        let tapResult = 1;
         for (const tap of taps) {
             tapResult = tapResult ^ parseInt(binaryString[tap])
         }
         // On final iteration
         if (i == (binaryString.length - 1)) {
-            binaryString = tapResult + binaryString.substring(1)
+            binaryString = tapResult + binaryString.substring(0, binaryString.length - 1)
         }
         else {
-            binaryString = "0" + tapResult + binaryString.substring(2)
+            binaryString = "0" + tapResult + binaryString.substring(0, binaryString.length - 2)
         }
 
     }

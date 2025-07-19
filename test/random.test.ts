@@ -55,4 +55,4 @@ function getAllPossibleStrings(length: number, startCodeUnit: number, endCodeUni
     return result;
 }
 
-testDistribution(1, 4)
+testDistribution(1, 3)
