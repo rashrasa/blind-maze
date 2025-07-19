@@ -1,27 +1,29 @@
 import { format } from 'fast-csv'
 import * as fs from "fs"
-import { generateBinarySequence32 } from './random';
+import { generateBinarySequence32 } from '../libraries/random';
 
-function testDistribution(maxStringLen: number = 3) {
+function testDistribution(minStringLen: number = 1, maxStringLen: number = 3) {
     const csvStream = format({ headers: true });
-    const writeStream = fs.createWriteStream("output.csv");
+    const writeStream = fs.createWriteStream("./test/output/output.csv");
     csvStream.pipe(writeStream);
 
     // Current string length being tested
-    for (let i = 1; i <= maxStringLen; i++) {
-        let seeds: string[] = getAllPossibleStrings(i, 0, 127);
+    for (let i = minStringLen; i <= maxStringLen; i++) {
+        let seeds: string[] = getAllPossibleStrings(i, 65, 90);
         console.log(`Testing strings of length ${i}. Testing ${seeds.length} strings.`)
         for (let j = 0; j < seeds.length; j++) {
-            let num;
+            let num: number | undefined;
+            let error: string | undefined;
             try {
                 num = generateBinarySequence32(seeds[j])
             }
             catch (e) {
-                num = e
+                error = String(e)
             }
             csvStream.write({
                 seedLength: i,
-                result: num
+                result: num,
+                error: error
             })
         }
     }
@@ -53,4 +55,4 @@ function getAllPossibleStrings(length: number, startCodeUnit: number, endCodeUni
     return result;
 }
 
-testDistribution(2)
+testDistribution(1, 4)

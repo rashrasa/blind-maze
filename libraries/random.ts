@@ -14,37 +14,36 @@ export function generateBinarySequence32(seed: string): number {
 
     let encoder = new TextEncoder()
     let encoded = encoder.encode(seed)
-    let timesOriginalLength = Math.ceil(encoded.byteLength * ((1.0 * nBytes) / (1.0 * encoded.byteLength))) + 2
 
-    // Expand to be >= nBytes
-    let merged = new Uint8Array(nBytes)
-    merged.fill(0)
-    if (encoded.byteLength <= 4) {
-        merged.set(encoded, 4 - encoded.length);
-    }
+    let timesOriginalLength = Math.ceil(encoded.byteLength * ((1.0 * nBytes) / (1.0 * encoded.byteLength))) + 2
 
 
     // Normalize to nBytes
     let normalized = new Uint8Array(nBytes)
-    if (merged.byteLength > nBytes) {
+    normalized.fill(0)
+    if (encoded.byteLength <= nBytes) {
+        normalized.set(encoded, 4 - encoded.length);
+    }
+    else if (encoded.byteLength > nBytes) {
         for (let i = 0; i < nBytes; i++) {
-            normalized[i] = merged[i];
+            normalized[i] = encoded[i];
         }
-        for (let i = nBytes; i < merged.byteLength; i++) {
-            normalized[i % nBytes] = normalized[i % nBytes] ^ merged[i];
+        for (let i = nBytes; i < encoded.byteLength; i++) {
+            normalized[i % nBytes] = normalized[i % nBytes] ^ encoded[i];
         }
     }
+    let normalizedView = new DataView(normalized.buffer)
     // Hash using linear-feedback shift register algorithm
 
     // 0-indexed, 31 will always be a tap for 32 bit numbers, 0 shouldnt be a tap
     let taps = [11, 17, 23, 29]
     let hashed = linearFeedbackShiftRegister(normalized, taps);
-    let bufferView = new DataView(hashed.buffer, 0);
+    let hashedView = new DataView(hashed.buffer, 0);
 
     // Implementation error, shouldn't but can occur
-    if (bufferView.getUint32(0) == 0) throw Error("An error occurred, please try another seed.")
+    if (hashedView.getUint32(0) == 0) throw Error("An error occurred, please try another seed.")
 
-    return (bufferView.getUint32(0))
+    return (hashedView.getUint32(0))
 }
 
 // Only working for 32-bit numbers
