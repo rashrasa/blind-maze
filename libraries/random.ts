@@ -1,7 +1,5 @@
 // Standalone pseudo-random generator
 
-import { arrayBuffer } from "node:stream/consumers";
-
 export function generate2DMazeLayout(width: number, height: number, seed: string): boolean[][] {
     // Pseudo-random 32-bit number based on seed
     let generationNumber = generateBinarySequence32(seed)
@@ -9,7 +7,7 @@ export function generate2DMazeLayout(width: number, height: number, seed: string
     return [[true, true, true]]
 }
 
-function generateBinarySequence32(seed: string): number {
+export function generateBinarySequence32(seed: string): number {
     if (seed.length == 0) throw Error("Cannot generate a 32-bit sequence from an empty string.");
 
     let nBytes: number = 4
@@ -19,10 +17,12 @@ function generateBinarySequence32(seed: string): number {
     let timesOriginalLength = Math.ceil(encoded.byteLength * ((1.0 * nBytes) / (1.0 * encoded.byteLength))) + 2
 
     // Expand to be >= nBytes
-    let merged = new Uint8Array(timesOriginalLength * encoded.length)
-    for (let i = 0; i < timesOriginalLength; i++) {
-        merged.set(encoded, i * encoded.byteLength);
+    let merged = new Uint8Array(nBytes)
+    merged.fill(0)
+    if (encoded.byteLength <= 4) {
+        merged.set(encoded, 4 - encoded.length);
     }
+
 
     // Normalize to nBytes
     let normalized = new Uint8Array(nBytes)
@@ -55,7 +55,6 @@ function linearFeedbackShiftRegister(number: Uint8Array, taps: number[]): Uint8A
 
     taps.sort().reverse()
     let binaryString = bufferView.getUint32(0, true).toString(2).padStart(32, "0");
-    console.log(`Initial:\t${binaryString}`)
     for (let i = 0; i < binaryString.length; i++) {
         let tapResult = parseInt(binaryString[nBytes * 8 - 1]);
         for (const tap of taps) {
