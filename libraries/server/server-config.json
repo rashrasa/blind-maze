@@ -1,7 +1,7 @@
 {
     "port": 3001,
     "tickRate": 120,
-    "mapWidth": 20,
-    "mapHeight": 20,
-    "mapSeed": 4238947923234
+    "mapWidth": 30,
+    "mapHeight": 30,
+    "mapSeed": "4238947923234"
 }

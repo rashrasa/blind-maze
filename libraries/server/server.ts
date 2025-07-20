@@ -10,15 +10,18 @@ import { emitKeypressEvents } from 'node:readline';
 // Simple websocket server
 const port: number = config.port
 
+console.log("Generating map...")
 const map: MapLayout = generateMap({
     width: config.mapWidth,
     height: config.mapHeight,
     seed: config.mapSeed
 })
 
+console.log(`Binding server to port ${port}`)
 const server = new WebSocketServer({
     port: port,
 });
+
 
 const playerConnections: Map<WebSocket, string> = new Map()
 const playerStates: Map<string, PlayerSnapshot> = new Map()

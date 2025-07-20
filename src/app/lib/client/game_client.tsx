@@ -23,7 +23,11 @@ interface GameClientProps {
 }
 
 var keysPressed: Map<string, boolean> = new Map()
+
 const PLAYER_SPEED = 12
+const PIXELS_PER_TILE = 10
+const PLAYER_SQUARE_LENGTH_TILES = .9
+
 const playerId: string = crypto.randomUUID()
 const player: Player = {
     id: playerId,
@@ -264,9 +268,6 @@ const GameClient: React.FC<GameClientProps> = (props) => {
 
 
     function renderGame(state: GameState, viewPortWidthPx: number, viewPortHeightPx: number): ReactNode {
-        const PIXELS_PER_TILE = 30
-        const PLAYER_SQUARE_LENGTH_TILES = .9
-
         const playerStates: PlayerSnapshot[] = state.playerStates
 
         const thisPlayer: PlayerSnapshot | null = getPlayerState()

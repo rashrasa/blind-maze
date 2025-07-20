@@ -5,67 +5,49 @@ export function generate2DMazeLayout(width: number, height: number, seed: string
     const generationNumber = generateBinarySequence32(seed)
     const bitString = generationNumber.toString(2).padStart(32, "0")
 
-    // Returns number of changed values (less than or equal to 'count')
-    function safeFill<T>(array: T[][], x1: number, y1: number, count: number, direction: Direction, item: T): number {
-        let updatedCount = 0;
-
-        let x2: number = x1;
-        let y2: number = y1;
-        switch (direction) {
-            case Direction.Up:
-                y1 = y1 - count;
-                break;
-            case Direction.Left:
-                x1 = x1 - count;
-                break;
-            case Direction.Down:
-                y2 = y2 + count;
-                break;
-            case Direction.Right:
-                x2 = x2 + count;
-                break;
-        }
-
-        x1 = Math.max(x1, 0)
-        x2 = Math.min(x2, array[0].length - 1)
-
-        y1 = Math.max(y1, 0)
-        y2 = Math.min(y2, array.length - 1)
-
-        for (let j = y1; j <= y2; j++) {
-            for (let i = x1; i <= x2; i++) {
-                if (array[j][i] != item) {
-                    array[j][i] = item;
-                    updatedCount++;
-                }
-
-            }
-        }
-        return updatedCount;
-    }
-
     let result: boolean[][] = []
     for (let i = 0; i < height; i++) {
         result.push(new Array(width))
-        result[i].fill(false)
+        result[i].fill(true)
     }
     let step = 0
-    const leap = 5;
-    const stepsNeeded = width * height / 2
+    let leap = 10;
+    const stepsNeeded = 60
     let x = width / 2;
     let y = 1;
     let direction = Direction.Down
-
+    let i = 0
 
     while (step < stepsNeeded) {
-        let left: boolean = parseInt(bitString[step % 32]) == 1
-        if (left) {
-            direction = getLeftDirection(direction)
+        let horizontal: boolean = parseInt(bitString[i % 32]) == 1
+        let positive: boolean = parseInt(bitString[(i + 1) % 32]) == 1
+        if (horizontal && positive) {
+            direction = Direction.Right
         }
-        else {
-            direction = getRightDirection(direction)
+        else if (horizontal && !positive) {
+            direction = Direction.Left
         }
-        step += safeFill(result, x, y, leap, direction, true)
+        else if (!horizontal && positive) {
+            direction = Direction.Down
+        }
+        else if (!horizontal && !positive) {
+            direction = Direction.Up
+        }
+        let leapResult = safeFill(result, x, y, leap, direction, false)
+        step += leapResult.uniqueFilled
+        x = leapResult.x2
+        y = leapResult.y2
+
+        i++
+        if (leapResult.uniqueFilled > 0) console.log(leapResult)
+    }
+    for (let i = 0; i < height; i++) {
+        for (let j = 0; j < width; j++) {
+            if (i == 0 || i == height - 1 || j == 0 || j == width - 1) {
+                result[j][i] = true
+            }
+        }
+
     }
 
     return result
@@ -80,7 +62,6 @@ export function generateBinarySequence32(seed: string): number {
     let encoded = encoder.encode(seed)
 
     let timesOriginalLength = Math.ceil(encoded.byteLength * ((1.0 * nBytes) / (1.0 * encoded.byteLength))) + 2
-
 
     // Normalize to nBytes
     let normalized = new Uint8Array(nBytes)
@@ -183,4 +164,55 @@ function getLeftDirection(direction: Direction): Direction {
         case Direction.Right:
             return Direction.Up
     }
+}
+
+interface FillResult {
+    uniqueFilled: number,
+    x2: number
+    y2: number
+    direction: Direction
+}
+
+
+function safeFill<T>(array: T[][], x: number, y: number, count: number, direction: Direction, item: T): FillResult {
+    let updatedCount = 0;
+
+    let x1 = x;
+    let y1 = y;
+
+    let x2 = x;
+    let y2 = y;
+
+    switch (direction) {
+        case Direction.Up:
+            y2 = y2 - count;
+            break;
+        case Direction.Down:
+            y2 = y2 + count;
+            break;
+        case Direction.Left:
+            x2 = x2 - count;
+            break;
+        case Direction.Right:
+            x2 = x2 + count;
+            break;
+    }
+    x2 = (x1 < x2) ? Math.min(x2, array[0].length - 1) : Math.max(x2, 0)
+    y2 = (y1 < y2) ? Math.min(y2, array.length - 1) : Math.max(y2, 0)
+
+    for (let j = y1; ((y1 < y2) ? j <= y2 : j >= y2); ((y1 < y2) ? j++ : j--)) {
+        for (let i = x1; ((x1 < x2) ? i <= x2 : i >= x2); ((x1 < x2) ? i++ : i--)) {
+            if (array[j][i] != item) {
+                array[j][i] = item;
+                updatedCount++;
+            }
+        }
+    }
+
+    return {
+        uniqueFilled: updatedCount,
+        x2: x2,
+        y2: y2,
+        direction: direction
+    };
 }
