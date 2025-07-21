@@ -10,35 +10,57 @@ export function generate2DMazeLayout(width: number, height: number, seed: string
         result.push(new Array(width))
         result[i].fill(true)
     }
+
     let step = 0
     let leap = 10;
-    const stepsNeeded = 60
-    let x = width / 2;
-    let y = 1;
+    const stepsNeeded = 100
+    let x = Math.floor(width / 2 + 1);
+    let y = Math.floor(height / 2 + 1);
+
+    const minX = 1
+    const minY = 1
+
+    const maxX = width - 1
+    const maxY = height - 1
+
     let direction = Direction.Down
     let i = 0
 
     while (step < stepsNeeded) {
-        let horizontal: boolean = parseInt(bitString[i % 32]) == 1
-        let positive: boolean = parseInt(bitString[(i + 1) % 32]) == 1
-        if (horizontal && positive) {
-            direction = Direction.Right
+        i = i * 5 + 1
+        let left: boolean = parseInt(bitString[(i) % 32]) == 1
+
+        if (left) {
+            direction = getLeftDirection(direction)
+        } else {
+            direction = getRightDirection(direction)
         }
-        else if (horizontal && !positive) {
-            direction = Direction.Left
-        }
-        else if (!horizontal && positive) {
-            direction = Direction.Down
-        }
-        else if (!horizontal && !positive) {
-            direction = Direction.Up
-        }
+
         let leapResult = safeFill(result, x, y, leap, direction, false)
+        if (leapResult.uniqueFilled == 0) {
+            if (leapResult.x2 <= minX) {
+                direction = Direction.Right
+                leapResult = safeFill(result, x, y, leap, direction, false)
+            }
+            else if (leapResult.x2 >= maxX) {
+                direction = Direction.Left
+                leapResult = safeFill(result, x, y, leap, direction, false)
+            }
+            else if (leapResult.y2 <= minY) {
+                direction = Direction.Down
+                leapResult = safeFill(result, x, y, leap, direction, false)
+            }
+            else if (leapResult.y2 >= maxY) {
+                direction = Direction.Up
+                leapResult = safeFill(result, x, y, leap, direction, false)
+            }
+        }
+
         step += leapResult.uniqueFilled
         x = leapResult.x2
         y = leapResult.y2
-
         i++
+
         if (leapResult.uniqueFilled > 0) console.log(leapResult)
     }
     for (let i = 0; i < height; i++) {
@@ -81,7 +103,7 @@ export function generateBinarySequence32(seed: string): number {
     // Hash using linear-feedback shift register algorithm
 
     // 0-indexed, 31 will always be a tap for 32 bit numbers, 0 shouldnt be a tap
-    let taps = [2, 5, 7, 21, 23, 29]
+    let taps = [17, 21, 23, 31]
     let hashed = linearFeedbackShiftRegister(normalized, taps);
     let hashedView = new DataView(hashed.buffer, 0);
 
@@ -175,6 +197,11 @@ interface FillResult {
 
 
 function safeFill<T>(array: T[][], x: number, y: number, count: number, direction: Direction, item: T): FillResult {
+    const minX = 0
+    const minY = 0
+
+    const maxX = array[0].length - 1
+    const maxY = array.length - 1
     let updatedCount = 0;
 
     let x1 = x;
@@ -197,8 +224,8 @@ function safeFill<T>(array: T[][], x: number, y: number, count: number, directio
             x2 = x2 + count;
             break;
     }
-    x2 = (x1 < x2) ? Math.min(x2, array[0].length - 1) : Math.max(x2, 0)
-    y2 = (y1 < y2) ? Math.min(y2, array.length - 1) : Math.max(y2, 0)
+    x2 = (x1 < x2) ? Math.min(x2, maxX) : Math.max(x2, minX)
+    y2 = (y1 < y2) ? Math.min(y2, maxY) : Math.max(y2, minY)
 
     for (let j = y1; ((y1 < y2) ? j <= y2 : j >= y2); ((y1 < y2) ? j++ : j--)) {
         for (let i = x1; ((x1 < x2) ? i <= x2 : i >= x2); ((x1 < x2) ? i++ : i--)) {
