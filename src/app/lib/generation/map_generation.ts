@@ -2,6 +2,7 @@ import { MapLayout, MapConfiguration, TileType } from '../types/game_types';
 import { generate2DMazeLayout } from '../../../../libraries/random';
 
 function generateMap(config: MapConfiguration): MapLayout {
+    /*
     return {
         tiles: generate2DMazeLayout(config.width, config.height, config.seed).map(
             row => row.map(
@@ -11,6 +12,12 @@ function generateMap(config: MapConfiguration): MapLayout {
         width: config.width,
         height: config.height
     }
+    */
+    return generateGenericLayout({
+        width: config.width,
+        height: config.height,
+        seed: config.seed
+    })
 }
 
 function generateGenericLayout(config: MapConfiguration): MapLayout {
@@ -24,7 +31,7 @@ function generateGenericLayout(config: MapConfiguration): MapLayout {
     for (let i = 0; i < height; i++) {
         let row: TileType[] = []
         for (let j = 0; j < width; j++) {
-            if (i == 0 || i == height - 1 || j == 0 || j == width - 1 || i == j) {
+            if (i == 0 || i == height - 1 || j == 0 || j == width - 1 || (((i % 4 == 0) || (i % 4 == 1)) && (j % 8 == 0))) {
                 row.push(1)
             }
             else {
