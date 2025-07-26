@@ -1,10 +1,10 @@
 // Standalone server component capable of accepting connections from game clients
 
 import { WebSocketServer, WebSocket } from 'ws';
-import { GameState, MapLayout, PlayerSnapshot, TileType } from '../../src/app/lib/types/game_types';
-import { gameStateFromBinary, gameStateToBinary, playerStateFromBinary } from '../../src/app/lib/types/communication';
+import { GameState, MapLayout, PlayerSnapshot, TileType } from '../lib/types/game_types';
+import { gameStateFromBinary, gameStateToBinary, playerStateFromBinary } from '../lib/types/communication';
 import config from './server-config.json';
-import { generateMap } from '../../src/app/lib/generation/map_generation';
+import { generateMap } from '../lib/generation/map_generation';
 import { emitKeypressEvents } from 'node:readline';
 
 // Simple websocket server
