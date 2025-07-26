@@ -29,11 +29,13 @@ const PIXELS_PER_TILE = 20
 const PLAYER_SQUARE_LENGTH_TILES = .9
 
 const playerId: string = crypto.randomUUID()
+const playerColor = `rgba(${Math.floor(Math.random() * 255 + 1)}, ${Math.floor(Math.random() * 255 + 1)}, ${Math.floor(Math.random() * 255 + 1)}, 1)`
 const player: Player = {
     id: playerId,
     displayName: "Player 0",
     username: "username",
-    avatarUrl: "google.ca"
+    avatarUrl: "google.ca",
+    color: playerColor
 }
 
 const GameClient: React.FC<GameClientProps> = (props) => {
@@ -322,7 +324,6 @@ const GameClient: React.FC<GameClientProps> = (props) => {
 
         context.strokeStyle = "white"
         context.lineWidth = 1
-        context.fillStyle = "green"
         for (const player of playerStates) {
             if (player == undefined) {
                 console.warn("WARNING: Undefined player object received.")
@@ -330,6 +331,7 @@ const GameClient: React.FC<GameClientProps> = (props) => {
             }
             const playerX = player.position.x
             const playerY = player.position.y
+            context.fillStyle = player.player.color ?? "white"
             context.beginPath()
             context.arc(
                 viewPortWidthPx / 2 + (-CENTER_X + playerX) * PIXELS_PER_TILE,

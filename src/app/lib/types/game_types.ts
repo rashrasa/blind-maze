@@ -19,6 +19,7 @@ interface Player {
     username: string;
     displayName: string | null;
     avatarUrl: string | null;
+    color: string | null;
 }
 
 /**
