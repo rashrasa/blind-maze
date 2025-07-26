@@ -24,7 +24,7 @@ interface GameClientProps {
 
 var keysPressed: Map<string, boolean> = new Map()
 
-const PLAYER_SPEED = 35
+const PLAYER_SPEED = 30
 const PIXELS_PER_TILE = 20
 const PLAYER_SQUARE_LENGTH_TILES = .9
 
