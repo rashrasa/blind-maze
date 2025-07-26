@@ -26,7 +26,7 @@ interface GameClientProps {
 var keysPressed: Map<string, boolean> = new Map()
 
 const PLAYER_SPEED = 35
-const PIXELS_PER_TILE = 10
+const PIXELS_PER_TILE = 20
 const PLAYER_SQUARE_LENGTH_TILES = .9
 
 const playerId: string = crypto.randomUUID()
@@ -42,6 +42,7 @@ const GameClient: React.FC<GameClientProps> = (props) => {
     const viewPortWidth = props.viewPortWidth
     const serverInput = useRef<HTMLTextAreaElement>(null);
     const error = useRef<string>(null)
+    const canvas = useRef<HTMLCanvasElement | null>(null);
 
     const [state, setState] = useState<GameClientState>({
         menu: GameClientMenu.MAIN_MENU,
@@ -57,6 +58,16 @@ const GameClient: React.FC<GameClientProps> = (props) => {
         return () => {
             window.removeEventListener("keydown", handleKeyDown)
             window.removeEventListener("keyup", handleKeyUp)
+        }
+    })
+
+    useEffect(() => {
+        let animationFrameId = requestAnimationFrame(() => {
+            if (gameStateSnapshot != null) renderGameOnCanvas(gameStateSnapshot)
+        })
+
+        return () => {
+            cancelAnimationFrame(animationFrameId)
         }
     })
     switch (state.menu) {
@@ -118,7 +129,8 @@ const GameClient: React.FC<GameClientProps> = (props) => {
                     </span>
                     {/* Z = 0 */}
                     {(gameStateSnapshot != null) ?
-                        renderGame(gameStateSnapshot, viewPortWidth, viewPortHeight) :
+                        //renderGame(gameStateSnapshot, viewPortWidth, viewPortHeight) :
+                        <canvas ref={canvas} width={viewPortWidth} height={viewPortHeight}></canvas> :
                         <span className="relative text-white" style={{ top: "250px", left: "155px" }}>
                             Initial game state not been received yet.
                         </span>}
@@ -267,6 +279,63 @@ const GameClient: React.FC<GameClientProps> = (props) => {
         server!.send(playerStateToBinary(updatedState));
     }
 
+    function renderGameOnCanvas(state: GameState) {
+        const context = canvas.current?.getContext("2d");
+        if (context == null) {
+            console.warn("Attempted to draw on non-existant canvas")
+            return
+        }
+        const playerStates: PlayerSnapshot[] = state.playerStates
+
+        const thisPlayer: PlayerSnapshot | null = getPlayerState()
+
+        const CENTER_X = thisPlayer?.position.x ?? 7.5
+        const CENTER_Y = thisPlayer?.position.y ?? 7.5
+
+        const viewPortHeightPx = canvas.current!.height
+        const viewPortWidthPx = canvas.current!.width
+
+        const tiles: TileType[][] = state.map.tiles;
+
+        context.clearRect(0, 0, viewPortWidthPx, viewPortHeightPx)
+
+        context.strokeStyle = "black"
+        context.lineWidth = 1
+        // Row
+        for (let i = 0; i < tiles.length; i++) {
+            // Column
+            for (let j = 0; j < tiles[i].length; j++) {
+                context.fillStyle = tiles[i][j] ? "white" : "black"
+                context.fillRect(
+                    viewPortWidthPx / 2 + (-CENTER_X + j) * PIXELS_PER_TILE,
+                    viewPortHeightPx / 2 + (-CENTER_Y + i) * PIXELS_PER_TILE,
+                    PIXELS_PER_TILE,
+                    PIXELS_PER_TILE
+                )
+            }
+        }
+
+        context.strokeStyle = "white"
+        context.lineWidth = 1
+        context.fillStyle = "green"
+        for (const player of playerStates) {
+            if (player == undefined) {
+                console.warn("WARNING: Undefined player object received.")
+                continue;
+            }
+            const playerX = player.position.x
+            const playerY = player.position.y
+
+            context.arc(
+                viewPortWidthPx / 2 + (-CENTER_X + playerX) * PIXELS_PER_TILE,
+                viewPortHeightPx / 2 + (-CENTER_Y + playerY) * PIXELS_PER_TILE,
+                PLAYER_SQUARE_LENGTH_TILES * PIXELS_PER_TILE / 2,
+                0,
+                2 * Math.PI
+            )
+            context.fill()
+        }
+    }
 
     function renderGame(state: GameState, viewPortWidthPx: number, viewPortHeightPx: number): ReactNode {
         const playerStates: PlayerSnapshot[] = state.playerStates
@@ -310,8 +379,6 @@ const GameClient: React.FC<GameClientProps> = (props) => {
             }
             const playerX = player.position.x
             const playerY = player.position.y
-            const speedX = player.velocity.x
-            const speedY = player.velocity.y
             //console.log(`Player: (${playerX}, ${playerY}), Velocity(${speedX}, ${speedY}),\nRendered position: (${viewPortWidthPx / 2 + (-CENTER_X + playerX) * PIXELS_PER_TILE}px, ${viewPortHeightPx / 2 + (-CENTER_Y + playerY) * PIXELS_PER_TILE}px)`)
 
             playerElements.push(
