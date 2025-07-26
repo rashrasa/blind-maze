@@ -7,7 +7,7 @@
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
-    "startServer": "npx tsx ./libraries/server/server.ts",
+    "startServer": "npx tsx ./src/app/server/server.ts",
     "test-random-distribution": "npx tsx test/random.test.ts && python ./test/plot.py"
   },
   "dependencies": {
