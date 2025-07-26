@@ -325,7 +325,7 @@ const GameClient: React.FC<GameClientProps> = (props) => {
             }
             const playerX = player.position.x
             const playerY = player.position.y
-
+            context.beginPath()
             context.arc(
                 viewPortWidthPx / 2 + (-CENTER_X + playerX) * PIXELS_PER_TILE,
                 viewPortHeightPx / 2 + (-CENTER_Y + playerY) * PIXELS_PER_TILE,
