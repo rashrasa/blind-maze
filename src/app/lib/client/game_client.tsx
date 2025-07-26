@@ -4,6 +4,7 @@ import { GameState, Player, PlayerSnapshot, TileType } from "../types/game_types
 import { gameStateFromBinary, gameStateToBinary, playerStateToBinary } from "../types/communication";
 import WebSocketAsPromised from "websocket-as-promised";
 import "node:crypto";
+import { hello_wasm } from "../../../../wasm/game-client/pkg";
 
 
 enum GameClientMenu {

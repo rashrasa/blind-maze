@@ -2,8 +2,13 @@
 
 import GameContainer from "./components/game_container/game_container";
 import NavBar from "./components/navbar/navbar";
+import { hello_wasm } from "../../wasm/game-client/pkg";
+import { useEffect } from "react";
 
 export default function Home() {
+  useEffect(() => {
+    hello_wasm()
+  })
   return (
     <div className="">
       <main className="z-0">
