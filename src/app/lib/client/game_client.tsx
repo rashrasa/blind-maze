@@ -183,6 +183,7 @@ const GameClient: React.FC<GameClientProps> = (props) => {
     }
 
     function handleKeyDown(event: KeyboardEvent) {
+        event.preventDefault()
         const inputKey = event.code
         const previous = keysPressed.get(inputKey)
         let playerState = getPlayerState()
