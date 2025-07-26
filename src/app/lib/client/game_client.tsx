@@ -4,7 +4,6 @@ import { GameState, Player, PlayerSnapshot, TileType } from "../types/game_types
 import { gameStateFromBinary, gameStateToBinary, playerStateToBinary } from "../types/communication";
 import WebSocketAsPromised from "websocket-as-promised";
 import "node:crypto";
-import { hello_wasm } from "../../../../wasm/game-client/pkg";
 
 
 enum GameClientMenu {
@@ -128,13 +127,19 @@ const GameClient: React.FC<GameClientProps> = (props) => {
                             }}> Disconnect</span>
                     </span>
                     {/* Z = 0 */}
-                    {(gameStateSnapshot != null) ?
-                        //renderGame(gameStateSnapshot, viewPortWidth, viewPortHeight) :
-                        <canvas ref={canvas} width={viewPortWidth} height={viewPortHeight}></canvas> :
-                        <span className="relative text-white" style={{ top: "250px", left: "155px" }}>
-                            Initial game state not been received yet.
-                        </span>}
-                </div>
+
+                    <canvas
+                        ref={canvas}
+                        width={viewPortWidth}
+                        height={viewPortHeight}
+                        style={{ visibility: (gameStateSnapshot != null) ? "visible" : "hidden" }} />
+                    <span
+                        className="relative text-white"
+                        style={{ top: "250px", left: "155px", visibility: (gameStateSnapshot != null) ? "visible" : "hidden" }}
+                    >
+                        Initial game state not been received yet.
+                    </span>
+                </div >
             );
 
     }
