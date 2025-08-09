@@ -183,7 +183,6 @@ const GameClient: React.FC<GameClientProps> = (props) => {
     }
 
     function handleKeyDown(event: KeyboardEvent) {
-        event.preventDefault()
         const inputKey = event.code
         const previous = keysPressed.get(inputKey)
         let playerState = getPlayerState()
@@ -195,15 +194,19 @@ const GameClient: React.FC<GameClientProps> = (props) => {
         }
         switch (inputKey) {
             case "ArrowUp":
+                event.preventDefault()
                 keysPressed.set("ArrowUp", true)
                 break;
             case "ArrowDown":
+                event.preventDefault()
                 keysPressed.set("ArrowDown", true)
                 break;
             case "ArrowLeft":
+                event.preventDefault()
                 keysPressed.set("ArrowLeft", true)
                 break;
             case "ArrowRight":
+                event.preventDefault()
                 keysPressed.set("ArrowRight", true)
                 break;
             default:
