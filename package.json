@@ -3,11 +3,12 @@
   "version": "0.0.1",
   "private": true,
   "scripts": {
-    "dev": "wasm-pack build wasm/game-client && next dev --turbopack",
+    "dev": "next dev --turbopack",
+    "dev-wasm": "wasm-pack build wasm/game-client && next dev --turbopack",
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
-    "startServer": "npx tsx ./src/app/server/server.ts",
+    "start-server": "npx tsx ./src/app/server/server.ts",
     "test-random-distribution": "npx tsx test/random.test.ts && python ./test/plot.py"
   },
   "dependencies": {
