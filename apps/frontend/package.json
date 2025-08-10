@@ -1,0 +1,39 @@
+{
+  "name": "blind-maze",
+  "version": "0.0.1",
+  "private": true,
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "next lint",
+    "start-server": "npx tsx ./src/app/server/server.ts",
+    "test-random-distribution": "npx tsx test/random.test.ts && python ./test/plot.py"
+  },
+  "dependencies": {
+    "@blind-maze/game-client": "workspace: *",
+    "crypto-browserify": "^3.12.1",
+    "fast-csv": "^5.0.2",
+    "next": "^15.3.3",
+    "react": "^19.1.0",
+    "react-dom": "^19.1.0",
+    "ts-node": "^10.9.2",
+    "websocket-as-promised": "^3.0.1",
+    "ws": "^8.18.2"
+  },
+  "devDependencies": {
+    "@eslint/eslintrc": "^3",
+    "@types/jest": "^30.0.0",
+    "@types/node": "^20.19.1",
+    "@types/react": "^19",
+    "@types/react-dom": "^19",
+    "@types/ws": "^8.18.1",
+    "eslint": "^9",
+    "eslint-config-next": "15.1.8",
+    "jest": "^30.0.2",
+    "postcss": "^8",
+    "tailwindcss": "^3.4.1",
+    "ts-jest": "^29.4.0",
+    "typescript": "^5.8.3"
+  }
+}
