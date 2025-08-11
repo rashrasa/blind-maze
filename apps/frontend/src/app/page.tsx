@@ -7,10 +7,10 @@ import init, { hello_wasm } from "@blind-maze/game-client";
 
 export default function Home() {
   useEffect(() => {
-    (async () => {
+    init().then((result) => {
       hello_wasm()
-    })()
-  })
+    })
+  });
   return (
     <div className="">
       <main className="z-0">

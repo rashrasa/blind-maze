@@ -4,7 +4,7 @@ import { generateBinarySequence32 } from '../src/app/random/random';
 
 function testDistribution(minStringLen: number = 1, maxStringLen: number = 3) {
     const csvStream = format({ headers: true });
-    const writeStream = fs.createWriteStream("./test/output/output.csv");
+    const writeStream = fs.createWriteStream("./test/output/test_distribution_output.csv");
     csvStream.pipe(writeStream);
 
     // Current string length being tested

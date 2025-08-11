@@ -16,6 +16,14 @@
     "dev": {
       "cache": false,
       "persistent": true
+    },
+    "start-server": {
+      "persistent": true,
+      "cache": false
+    },
+    "test-random-distribution": {
+      "persistent": true,
+      "cache": false
     }
   }
 }
