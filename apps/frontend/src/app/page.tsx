@@ -3,7 +3,7 @@
 import GameContainer from "./components/game_container/game_container";
 import NavBar from "./components/navbar/navbar";
 import { useEffect } from "react";
-import init, { hello_wasm } from "@blind-maze/game-client";
+import init, { hello_wasm } from "@blind-maze/random";
 
 export default function Home() {
   useEffect(() => {

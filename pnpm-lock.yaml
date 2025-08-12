@@ -20,9 +20,9 @@ importers:
 
   apps/frontend:
     dependencies:
-      '@blind-maze/game-client':
+      '@blind-maze/random':
         specifier: 'workspace: *'
-        version: link:../../packages/game-client
+        version: link:../../packages/random
       crypto-browserify:
         specifier: ^3.12.1
         version: 3.12.1
@@ -91,7 +91,7 @@ importers:
         specifier: ^5.8.3
         version: 5.8.3
 
-  packages/game-client: {}
+  packages/random: {}
 
 packages:
 

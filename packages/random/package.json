@@ -1,10 +1,10 @@
 {
-  "name": "@blind-maze/game-client",
+  "name": "@blind-maze/random",
   "version": "0.0.1",
   "private": true,
   "type": "module",
-  "main": "pkg/game_client.js",
-  "types": "pkg/game_client.d.ts",
+  "main": "pkg/random.js",
+  "types": "pkg/random.d.ts",
   "files": [
     "pkg/**"
   ],
