@@ -1,10 +1,9 @@
 // Standalone server component capable of accepting connections from game clients
 
 import { WebSocketServer, WebSocket } from 'ws';
-import { GameState, MapLayout, PlayerSnapshot, TileType } from '../lib/types/game_types';
-import { gameStateFromBinary, gameStateToBinary, playerStateFromBinary } from '../lib/types/communication';
+import { GameState, MapLayout, PlayerSnapshot, TileType, gameStateFromBinary, gameStateToBinary, playerStateFromBinary } from '@blind-maze/types';
 import config from './server-config.json';
-import { generateMap } from '../lib/generation/map_generation';
+import { generateMap } from './src/map_generation';
 import { emitKeypressEvents } from 'node:readline';
 
 // Simple websocket server
@@ -107,8 +106,11 @@ function tick(milliseconds: number) {
 }
 
 async function updateStateAndClients() {
-    let playerStateList = playerStates.values()
-    state.playerStates = playerStateList.toArray()
+    let playerStateValues = playerStates.values()
+    state.playerStates = []
+    for (const playerState of playerStateValues) {
+        state.playerStates.push(playerState)
+    }
     server.clients.forEach(async (client) => {
         client.send(gameStateToBinary(state), (error) => {
             if (error) console.error(error)

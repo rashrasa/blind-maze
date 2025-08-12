@@ -23,6 +23,9 @@ importers:
       '@blind-maze/random':
         specifier: 'workspace: *'
         version: link:../../packages/random
+      '@blind-maze/types':
+        specifier: 'workspace: *'
+        version: link:../../packages/types
       crypto-browserify:
         specifier: ^3.12.1
         version: 3.12.1
@@ -91,7 +94,25 @@ importers:
         specifier: ^5.8.3
         version: 5.8.3
 
+  apps/server:
+    dependencies:
+      '@blind-maze/types':
+        specifier: 'workspace: *'
+        version: link:../../packages/types
+      tsx:
+        specifier: ^4.20.3
+        version: 4.20.3
+      ws:
+        specifier: ^8.18.2
+        version: 8.18.3
+    devDependencies:
+      '@types/ws':
+        specifier: ^8.18.1
+        version: 8.18.1
+
   packages/random: {}
+
+  packages/types: {}
 
 packages:
 

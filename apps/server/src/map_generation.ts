@@ -1,5 +1,5 @@
-import { MapLayout, MapConfiguration, TileType } from '../types/game_types';
-import { generate2DMazeLayout } from '../../random/random';
+import { MapLayout, MapConfiguration, TileType } from '@blind-maze/types';
+//import { generate2DMazeLayout } from '../../random/random';
 
 function generateMap(config: MapConfiguration): MapLayout {
     /*

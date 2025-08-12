@@ -1,6 +1,6 @@
-import {describe, expect, test} from '@jest/globals';
-import {generateMap} from '../app/lib/generation/map_generation';
-import {MapConfiguration, TileType} from '@/app/lib/types/game_types';
+import { describe, expect, test } from '@jest/globals';
+import { generateMap } from '../app/lib/generation/map_generation';
+import { MapConfiguration, TileType } from '../../../packages/types/game_types';
 
 describe('Map Generation', () => {
     test('should generate a map with the correct dimensions', () => {

@@ -9,7 +9,8 @@
     "pkg/**"
   ],
   "scripts": {
-    "build": "wasm-pack build --target web --out-dir pkg --release"
+    "build": "wasm-pack build --target web --out-dir pkg --release",
+    "test-random-distribution": "Unimplemented: @blind-maze/random is being moved to Rust"
   },
   "devDependencies": {
   }

@@ -1,7 +1,6 @@
 "use client";
 import React, { ReactNode, useEffect, useRef, useState } from "react";
-import { GameState, Player, PlayerSnapshot, TileType } from "../types/game_types";
-import { gameStateFromBinary, gameStateToBinary, playerStateToBinary } from "../types/communication";
+import { GameState, Player, PlayerSnapshot, TileType, gameStateFromBinary, gameStateToBinary, playerStateToBinary } from "@blind-maze/types";
 import WebSocketAsPromised from "websocket-as-promised";
 import "crypto";
 

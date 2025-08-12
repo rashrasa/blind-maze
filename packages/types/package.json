@@ -1,0 +1,7 @@
+{
+  "name": "@blind-maze/types",
+  "version": "0.0.1",
+  "private": true,
+  "types": "./game_types.ts",
+  "main": "./game_types.ts"
+}
