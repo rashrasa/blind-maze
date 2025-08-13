@@ -36,7 +36,7 @@ interface PlayerSnapshot {
 /**
  * Represents the state of the game at a specific moment in time.
  */
-interface GameState {
+interface GameSnapshot {
     playerStates: PlayerSnapshot[];
     map: MapLayout;
 }
@@ -64,12 +64,12 @@ interface MapConfiguration {
     seed: string;
 }
 
-function gameStateToBinary(state: GameState): any {
+function gameStateToBinary(state: GameSnapshot): any {
     return JSON.stringify(state);
 }
 
-function gameStateFromBinary(binary: any): GameState {
-    const gameState: GameState = JSON.parse(binary)
+function gameStateFromBinary(binary: any): GameSnapshot {
+    const gameState: GameSnapshot = JSON.parse(binary)
     return gameState;
 }
 
@@ -86,7 +86,7 @@ export type {
     GameConfig,
     Player,
     PlayerSnapshot,
-    GameState,
+    GameSnapshot,
     MapLayout,
     MapConfiguration,
 }

@@ -1,0 +1,12 @@
+{
+  "name": "@blind-maze/client",
+  "version": "0.0.1",
+  "private": true,
+  "main": "./client.ts",
+  "types": "./client.ts",
+  "scripts": {},
+  "dependencies": {
+    "@blind-maze/types": "workspace: *",
+    "websocket-as-promised": "^3.0.1"
+  }
+}

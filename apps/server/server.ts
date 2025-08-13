@@ -1,7 +1,7 @@
 // Standalone server component capable of accepting connections from game clients
 
 import { WebSocketServer, WebSocket } from 'ws';
-import { GameState, MapLayout, PlayerSnapshot, TileType, gameStateFromBinary, gameStateToBinary, playerStateFromBinary } from '@blind-maze/types';
+import { GameSnapshot, MapLayout, PlayerSnapshot, TileType, gameStateFromBinary, gameStateToBinary, playerStateFromBinary } from '@blind-maze/types';
 import config from './server-config.json';
 import { generateMap } from './src/map_generation';
 import { emitKeypressEvents } from 'node:readline';
@@ -21,11 +21,10 @@ const server = new WebSocketServer({
     port: port,
 });
 
-
 const playerConnections: Map<WebSocket, string> = new Map()
 const playerStates: Map<string, PlayerSnapshot> = new Map()
 
-var state: GameState = {
+var state: GameSnapshot = {
     playerStates: [],
     map: map
 }
