@@ -9,15 +9,17 @@
     "lint": "next lint"
   },
   "dependencies": {
+    "@blind-maze/client": "workspace:^",
     "@blind-maze/random": "workspace: *",
-    "@blind-maze/client": "workspace: *",
     "crypto-browserify": "^3.12.1",
     "next": "^15.3.3",
     "react": "^19.1.0",
     "react-dom": "^19.1.0"
   },
   "devDependencies": {
+    "@blind-maze/eslint-config": "workspace: *",
     "@blind-maze/types": "workspace: *",
+    "@blind-maze/typescript-config": "workspace: *",
     "@eslint/eslintrc": "^3",
     "@types/jest": "^30.0.0",
     "@types/node": "^20.19.1",
@@ -27,7 +29,6 @@
     "eslint-config-next": "15.1.8",
     "jest": "^30.0.2",
     "postcss": "^8",
-    "tailwindcss": "^3.4.1",
-    "typescript": "^5.8.3"
+    "tailwindcss": "^3.4.1"
   }
 }

@@ -8,7 +8,7 @@ export function generate2DMazeLayout(width: number, height: number, seed: string
     let result: boolean[][] = []
     for (let i = 0; i < height; i++) {
         result.push(new Array(width))
-        result[i].fill(true)
+        result[i]!.fill(true)
     }
 
     let step = 0
@@ -28,7 +28,7 @@ export function generate2DMazeLayout(width: number, height: number, seed: string
 
     while (step < stepsNeeded) {
         i = i * 5 + 1
-        let left: boolean = parseInt(bitString[(i) % 32]) == 1
+        let left: boolean = parseInt(bitString[(i) % 32]!) == 1
 
         if (left) {
             direction = getLeftDirection(direction)
@@ -66,7 +66,7 @@ export function generate2DMazeLayout(width: number, height: number, seed: string
     for (let i = 0; i < height; i++) {
         for (let j = 0; j < width; j++) {
             if (i == 0 || i == height - 1 || j == 0 || j == width - 1) {
-                result[j][i] = true
+                result[j]![i] = true
             }
         }
 
@@ -93,10 +93,10 @@ export function generateBinarySequence32(seed: string): number {
     }
     else if (encoded.byteLength > nBytes) {
         for (let i = 0; i < nBytes; i++) {
-            normalized[i] = encoded[i];
+            normalized[i] = encoded[i]!;
         }
         for (let i = nBytes; i < encoded.byteLength; i++) {
-            normalized[i % nBytes] = normalized[i % nBytes] ^ encoded[i];
+            normalized[i % nBytes] = normalized[i % nBytes]! ^ encoded[i]!;
         }
     }
     let normalizedView = new DataView(normalized.buffer)
@@ -124,7 +124,7 @@ function linearFeedbackShiftRegister(number: Uint8Array, taps: number[]): Uint8A
     for (let i = 0; i < binaryString.length; i++) {
         let tapResult = 1;
         for (const tap of taps) {
-            tapResult = tapResult ^ parseInt(binaryString[tap])
+            tapResult = tapResult ^ parseInt(binaryString[tap]!)
         }
         // On final iteration
         if (i == (binaryString.length - 1)) {
@@ -200,7 +200,7 @@ function safeFill<T>(array: T[][], x: number, y: number, count: number, directio
     const minX = 0
     const minY = 0
 
-    const maxX = array[0].length - 1
+    const maxX = array[0]!.length - 1
     const maxY = array.length - 1
     let updatedCount = 0;
 
@@ -229,8 +229,8 @@ function safeFill<T>(array: T[][], x: number, y: number, count: number, directio
 
     for (let j = y1; ((y1 < y2) ? j <= y2 : j >= y2); ((y1 < y2) ? j++ : j--)) {
         for (let i = x1; ((x1 < x2) ? i <= x2 : i >= x2); ((x1 < x2) ? i++ : i--)) {
-            if (array[j][i] != item) {
-                array[j][i] = item;
+            if (array[j]![i] != item) {
+                array[j]![i] = item;
                 updatedCount++;
             }
         }

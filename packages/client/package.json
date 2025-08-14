@@ -2,11 +2,23 @@
   "name": "@blind-maze/client",
   "version": "0.0.1",
   "private": true,
-  "main": "./client.ts",
-  "types": "./client.ts",
-  "scripts": {},
+  "main": "dist/client.js",
+  "types": "dist/client.d.ts",
+  "files": [
+    "dist/**"
+  ],
+  "type": "module",
+  "scripts": {
+    "dev": "tsc --watch --preserveWatchOutput",
+    "build": "tsc",
+    "lint": "eslint ."
+  },
   "dependencies": {
-    "@blind-maze/types": "workspace: *",
     "websocket-as-promised": "^3.0.1"
+  },
+  "devDependencies": {
+    "@blind-maze/types": "workspace: *",
+    "@blind-maze/typescript-config": "workspace: *",
+    "@blind-maze/eslint-config": "workspace: *"
   }
 }

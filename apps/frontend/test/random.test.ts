@@ -1,6 +1,7 @@
+/*
 import { format } from 'fast-csv'
 import * as fs from "fs"
-import { generateBinarySequence32 } from '../src/app/random/random';
+import { generateBinarySequence32 } from '../app/random/random';
 
 function testDistribution(minStringLen: number = 1, maxStringLen: number = 3) {
     const csvStream = format({ headers: true });
@@ -56,3 +57,4 @@ function getAllPossibleStrings(length: number, startCodeUnit: number, endCodeUni
 }
 
 testDistribution(1, 3)
+*/

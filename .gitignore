@@ -85,3 +85,5 @@ output.csv
 **/target
 
 **/output/**
+
+exclude/*
