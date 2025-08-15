@@ -18,6 +18,7 @@ import "crypto";
 const PLAYER_SPEED = 30
 const PIXELS_PER_TILE = 20
 const PLAYER_SQUARE_LENGTH_TILES = .9
+const TICK_RATE = 60;
 
 // Appends itself to container
 export class GameClient {
@@ -28,6 +29,8 @@ export class GameClient {
     private readonly viewPortWidthPx: number;
     private readonly viewPortHeightPx: number;
     private readonly clientContainer: HTMLElement
+
+    private updates = 0;
 
     // State
     private host: string | null;
@@ -70,7 +73,7 @@ export class GameClient {
         this.keysPressed = new Map()
         this.disposed = false
 
-        this.startRenderLoop();
+        requestAnimationFrame(this.renderUntilStopped.bind(this))
     }
 
     public dispose() {
@@ -132,7 +135,7 @@ export class GameClient {
             this.host = serverLocation
             this.webSocketConnection = connection.ws
         }
-        this.updateStateAndServer(connection.ws, intitalPlayerState)
+        this.sendUpdateToServer(connection.ws, intitalPlayerState)
         return true;
     }
 
@@ -150,21 +153,21 @@ export class GameClient {
         return this.isVisible;
     }
 
-    private startRenderLoop() {
-        if (this.disposed == true) {
-            console.warn("Attempted to start render loop while disposed.");
-            return;
-        }
-
-        requestAnimationFrame(this.renderUntilStopped.bind(this))
-    }
-
-    private renderUntilStopped() {
+    private renderUntilStopped(timeElapsed: number) {
+        console.log(`Called render with timestamp ${timeElapsed}.`)
         if (this.disposed == true) {
             console.info("Shutting down renderer.");
             return;
         }
-        if (this.lastGameSnapshot != null || true) this.renderGameOnCanvas(this.lastGameSnapshot)
+        if (this.lastGameSnapshot != null || true) {
+            console.log(`Current player state: ${JSON.stringify(this.lastThisPlayerSnapshot)}`)
+            if ((timeElapsed) / (1000.0 / TICK_RATE) > this.updates) {
+                this.tick(1000.0 / TICK_RATE);
+                this.updates++;
+            }
+            console.log(`Current player state after tick: ${JSON.stringify(this.lastThisPlayerSnapshot)}`)
+            this.renderGameOnCanvas(this.lastGameSnapshot)
+        }
         requestAnimationFrame(this.renderUntilStopped.bind(this))
     }
 
@@ -232,8 +235,30 @@ export class GameClient {
         }
     }
 
-    private async updateStateAndServer(server: WebSocket, updatedState: PlayerSnapshot): Promise<void> {
+    private async sendUpdateToServer(server: WebSocket, updatedState: PlayerSnapshot): Promise<void> {
         server!.send(playerStateToBinary(updatedState));
+    }
+
+    // Main function for updating the game
+    private tick(milliseconds: number) {
+        if (this.lastThisPlayerSnapshot == null) {
+            console.warn("Tried ticking without a player snaphot. Ignoring.")
+            return;
+        }
+        let updatedState: PlayerSnapshot = {
+            isLeader: this.lastThisPlayerSnapshot!.isLeader,
+            player: this.lastThisPlayerSnapshot!.player,
+            position: {
+                x: this.lastThisPlayerSnapshot!.position.x + this.lastThisPlayerSnapshot!.velocity.x * milliseconds / 1000.0,
+                y: this.lastThisPlayerSnapshot!.position.y + this.lastThisPlayerSnapshot!.velocity.y * milliseconds / 1000.0
+            },
+            velocity: this.lastThisPlayerSnapshot!.velocity,
+            snapshotTimestampMs: Date.now()
+        }
+        this.lastThisPlayerSnapshot = updatedState;
+
+        // Update server state - fire and forget
+        this.sendUpdateToServer(this.webSocketConnection!, updatedState);
     }
 
     private handleKeyUp(event: KeyboardEvent) {
@@ -321,6 +346,6 @@ export class GameClient {
             velocity: velocity,
             snapshotTimestampMs: Date.now()
         }
-        this.updateStateAndServer(this.webSocketConnection!, updatedState)
+        this.sendUpdateToServer(this.webSocketConnection!, updatedState)
     }
 }

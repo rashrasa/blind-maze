@@ -67,43 +67,6 @@ server.on("wsClientError", (error) => {
     console.log(error);
 })
 
-
-// Emit constant rate of current states
-const startTimeMs = Date.now();
-const TICK_RATE = config.tickRate;
-var updates = 0;
-
-setInterval(() => {
-    if (
-        (Date.now() - startTimeMs) / 1000 * TICK_RATE > updates
-    ) {
-        setTimeout(() => {
-            tick(1000.0 / TICK_RATE)
-            updates++;
-        }, 0)
-    }
-}, 0)
-
-
-// Main function for updating the game
-function tick(milliseconds: number) {
-    for (const [playerId, playerState] of playerStates) {
-        let updatedState: PlayerSnapshot = {
-            isLeader: playerState.isLeader,
-            player: playerState.player,
-            position: {
-                x: playerState.position.x + playerState.velocity.x * milliseconds / 1000.0,
-                y: playerState.position.y + playerState.velocity.y * milliseconds / 1000.0
-            },
-            velocity: playerState.velocity,
-            snapshotTimestampMs: Date.now()
-        }
-        playerStates.set(playerId, updatedState)
-    }
-    // Update states - fire and forget
-    updateStateAndClients()
-}
-
 async function updateStateAndClients() {
     let playerStateValues = playerStates.values()
     state.playerStates = []
