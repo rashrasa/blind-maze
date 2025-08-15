@@ -49,7 +49,8 @@ export default function GameContainer() {
         >
             <div style={{
                 visibility: showClient ? "hidden" : "visible",
-                height: showClient ? "0px" : "auto"
+                height: showClient ? "0px" : "auto",
+                width: showClient ? "0px" : "auto"
             }}>
                 <button
                     className="mx-auto text-blue-500 z-10 w-12 h-8"

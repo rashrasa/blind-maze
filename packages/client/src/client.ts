@@ -27,6 +27,7 @@ export class GameClient {
     private readonly thisPlayer: Player;
     private readonly viewPortWidthPx: number;
     private readonly viewPortHeightPx: number;
+    private readonly clientContainer: HTMLElement
 
     // State
     private host: string | null;
@@ -48,9 +49,15 @@ export class GameClient {
         this.canvas = document.createElement("canvas");
         this.canvas.width = viewPortWidthPx;
         this.canvas.height = viewPortHeightPx;
+        this.clientContainer = clientContainer;
 
-        this.canvas.addEventListener("keydown", this.handleKeyDown.bind(this));
-        this.canvas.addEventListener("keyup", this.handleKeyUp.bind(this));
+        if (this.clientContainer.ownerDocument.defaultView == null) {
+            console.error("Could not bind keyboard events to window.");
+        }
+        else {
+            this.clientContainer.ownerDocument.defaultView.addEventListener("keydown", this.handleKeyDown.bind(this));
+            this.clientContainer.ownerDocument.defaultView.addEventListener("keyup", this.handleKeyUp.bind(this));
+        }
 
         this.thisPlayer = player;
         this.container.appendChild(this.canvas);
@@ -67,8 +74,13 @@ export class GameClient {
     }
 
     public dispose() {
-        this.canvas.removeEventListener("keydown", this.handleKeyDown.bind(this))
-        this.canvas.removeEventListener("keyup", this.handleKeyUp.bind(this))
+        if (this.clientContainer.ownerDocument.defaultView == null) {
+            console.error("Could not unbind keyboard events to window.");
+        }
+        else {
+            this.clientContainer.ownerDocument.defaultView?.removeEventListener("keydown", this.handleKeyDown.bind(this))
+            this.clientContainer.ownerDocument.defaultView?.removeEventListener("keyup", this.handleKeyUp.bind(this))
+        }
         this.disposed = true;
     }
 
@@ -110,7 +122,7 @@ export class GameClient {
                     this.lastThisPlayerSnapshot = thisPlayerSnapshot;
                 }
                 else {
-                    console.error("Received game state without current player.")
+                    console.warn("Received game state without current player.")
                 }
             })
             connection.ws.addEventListener("close", () => {
@@ -139,11 +151,15 @@ export class GameClient {
     }
 
     private startRenderLoop() {
+        if (this.disposed == true) {
+            console.warn("Attempted to start render loop while disposed.");
+            return;
+        }
+
         requestAnimationFrame(this.renderUntilStopped.bind(this))
     }
 
     private renderUntilStopped() {
-
         if (this.disposed == true) {
             console.info("Shutting down renderer.");
             return;
