@@ -154,18 +154,15 @@ export class GameClient {
     }
 
     private renderUntilStopped(timeElapsed: number) {
-        console.log(`Called render with timestamp ${timeElapsed}.`)
         if (this.disposed == true) {
             console.info("Shutting down renderer.");
             return;
         }
         if (this.lastGameSnapshot != null || true) {
-            console.log(`Current player state: ${JSON.stringify(this.lastThisPlayerSnapshot)}`)
             if ((timeElapsed) / (1000.0 / TICK_RATE) > this.updates) {
                 this.tick(1000.0 / TICK_RATE);
                 this.updates++;
             }
-            console.log(`Current player state after tick: ${JSON.stringify(this.lastThisPlayerSnapshot)}`)
             this.renderGameOnCanvas(this.lastGameSnapshot)
         }
         requestAnimationFrame(this.renderUntilStopped.bind(this))
