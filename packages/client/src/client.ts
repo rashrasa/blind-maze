@@ -25,6 +25,8 @@ export class GameClient {
     private readonly container: HTMLDivElement;
     private readonly canvas: HTMLCanvasElement;
     private readonly thisPlayer: Player;
+    private readonly viewPortWidthPx: number;
+    private readonly viewPortHeightPx: number;
 
     // State
     private host: string | null;
@@ -32,18 +34,23 @@ export class GameClient {
     private lastGameSnapshot: GameSnapshot | null;
     private lastThisPlayerSnapshot: PlayerSnapshot | null;
     private keysPressed: Map<string, boolean>
+    private isVisible = false;
     private disposed: boolean;
 
     constructor(player: Player, clientContainer: HTMLElement, viewPortWidthPx: number, viewPortHeightPx: number) {
         this.container = document.createElement("div");
         this.container.className = "w-[600px] h-[600px]"
+        this.container.style.visibility = "hidden"
+
+        this.viewPortWidthPx = viewPortWidthPx;
+        this.viewPortHeightPx = viewPortHeightPx;
 
         this.canvas = document.createElement("canvas");
         this.canvas.width = viewPortWidthPx;
         this.canvas.height = viewPortHeightPx;
 
-        this.canvas.addEventListener("keydown", this.handleKeyDown);
-        this.canvas.addEventListener("keyup", this.handleKeyUp);
+        this.canvas.addEventListener("keydown", this.handleKeyDown.bind(this));
+        this.canvas.addEventListener("keyup", this.handleKeyUp.bind(this));
 
         this.thisPlayer = player;
         this.container.appendChild(this.canvas);
@@ -57,6 +64,12 @@ export class GameClient {
         this.disposed = false
 
         this.startRenderLoop();
+    }
+
+    public dispose() {
+        this.canvas.removeEventListener("keydown", this.handleKeyDown.bind(this))
+        this.canvas.removeEventListener("keyup", this.handleKeyUp.bind(this))
+        this.disposed = true;
     }
 
 
@@ -111,37 +124,48 @@ export class GameClient {
         return true;
     }
 
+    public setVisibility(visible: boolean) {
+        if (visible) {
+            this.container.style.visibility = "visible"
+        }
+        else {
+            this.container.style.visibility = "hidden"
+        }
+        this.isVisible = visible;
+    }
 
-    public dispose() {
-        this.canvas.removeEventListener("keydown", this.handleKeyDown)
-        this.canvas.removeEventListener("keyup", this.handleKeyUp)
-        this.disposed = true;
+    public isClientVisible() {
+        return this.isVisible;
     }
 
     private startRenderLoop() {
-        if (this.disposed == true) {
-            console.warn("Attempted to start render loop while disposed.");
-            return;
-        }
-
-        requestAnimationFrame(this.renderUntilStopped)
+        requestAnimationFrame(this.renderUntilStopped.bind(this))
     }
 
     private renderUntilStopped() {
+
         if (this.disposed == true) {
             console.info("Shutting down renderer.");
             return;
         }
-        if (this.lastGameSnapshot != null) this.renderGameOnCanvas(this.lastGameSnapshot)
-        requestAnimationFrame(this.renderUntilStopped)
+        if (this.lastGameSnapshot != null || true) this.renderGameOnCanvas(this.lastGameSnapshot)
+        requestAnimationFrame(this.renderUntilStopped.bind(this))
     }
 
-    private renderGameOnCanvas(state: GameSnapshot) {
+    private renderGameOnCanvas(state: GameSnapshot | null) {
         const context = this.canvas.getContext("2d");
         if (context == null) {
             console.warn("Attempted to draw on non-existant canvas")
             return
         }
+        context.rect(0, 0, this.viewPortWidthPx, this.viewPortHeightPx);
+        context.fill()
+
+        if (state == null) {
+            console.warn("Could not render full client, state is null");
+            return;
+        }
+
         const playerStates: PlayerSnapshot[] = state.playerStates
 
         const CENTER_X = this.lastThisPlayerSnapshot?.position.x ?? 7.5

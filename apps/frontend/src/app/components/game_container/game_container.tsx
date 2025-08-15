@@ -1,7 +1,7 @@
 'use client';
 
 import { GameClient } from "@blind-maze/client";
-import { ReactNode, useEffect, useRef, useState } from "react";
+import { ReactNode, useEffect, useLayoutEffect, useRef, useState } from "react";
 import { Player } from "@blind-maze/types";
 
 enum GameClientMenu {
@@ -13,8 +13,6 @@ enum GameClientMenu {
 interface GameClientState {
     menu: GameClientMenu;
 }
-
-var keysPressed: Map<string, boolean> = new Map()
 
 const playerId: string = crypto.randomUUID()
 const playerColor = `rgba(${Math.floor(Math.random() * 255 + 1)}, ${Math.floor(Math.random() * 255 + 1)}, ${Math.floor(Math.random() * 255 + 1)}, 1)`
@@ -29,22 +27,42 @@ const player: Player = {
 export default function GameContainer() {
     const container = useRef<HTMLDivElement | null>(null);
     const [menuState, setMenuState] = useState<GameClientState>({ menu: GameClientMenu.MAIN_MENU });
-    useEffect(() => {
-        const gameClient = new GameClient(player, container.current!, 600, 600);
+    const [showClient, setShowClient] = useState(false);
+    let gameClient: GameClient | null;
+    useLayoutEffect(() => {
+        gameClient = new GameClient(player, container.current!, 600, 600);
+        gameClient.setVisibility(false)
         return () => {
-            gameClient.dispose()
+            gameClient?.dispose()
         }
     }, [])
 
     return (
         <div
             ref={container}
-            className="border-2 border-black mx-auto mt-52"
+            className="border-2 border-black box-border mx-auto mt-52"
             style={{
                 width: "600px",
-                height: "600px"
+                height: "600px",
+
             }}
         >
+            <div style={{
+                visibility: showClient ? "hidden" : "visible",
+                height: showClient ? "0px" : "auto"
+            }}>
+                <button
+                    className="mx-auto text-blue-500 z-10 w-12 h-8"
+                    onClick={() => {
+                        gameClient?.setVisibility(!gameClient?.isClientVisible())
+                        setShowClient(!showClient);
+                        gameClient?.connectToServer("ws://localhost:3001")
+                    }}
+                >
+                    Button
+                </button>
+            </div>
+
         </div>
     )
 }
