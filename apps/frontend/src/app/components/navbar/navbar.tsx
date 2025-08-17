@@ -1,21 +1,19 @@
-"use client";
-
 import Link from 'next/link';
 
-interface NavBarElementData{
+interface NavBarElementData {
     key: string,
     displayName: string,
     route: string
 }
 
 function NavBarItem(parameters: NavBarElementData) {
-    return(
-        <div 
-            key={parameters.key} 
-            className="rounded-lg hover:bg-gray-200 hover:cursor-pointer active:bg-gray-300 p-2 inline-block"
+    return (
+        <div
+            key={parameters.key}
+            className="rounded-lg hover:bg-sky-200 hover:cursor-pointer active:bg-sky-300 p-2"
         >
             <Link
-                href={""+parameters.route}
+                href={"" + parameters.route}
                 className="text-2xl"
             >
                 {parameters.displayName}
@@ -24,33 +22,35 @@ function NavBarItem(parameters: NavBarElementData) {
     );
 }
 
-export default function NavBar(){
-    let leading:React.ReactNode[] = [
+export default function NavBar() {
+    let leading: React.ReactNode[] = [
         NavBarItem({
             key: "home",
-            displayName:"Home",
+            displayName: "Home",
             route: "/"
         }),
         NavBarItem({
             key: "leaderboards",
-            displayName:"Leaderboards",
+            displayName: "Leaderboards",
             route: "/leaderboards"
         })
     ]
-    let trailing:React.ReactNode[] = [
+    let trailing: React.ReactNode[] = [
         NavBarItem({
             key: "auth",
-            displayName:"Sign In",
-            route: "/authentication"
+            displayName: "Sign In",
+            route: "/login"
         })
     ]
-    return(
-        <div className="flex justify-between w-full h-20 bg-gray-100 px-4 sticky left-0 top-0 overflow-hidden">
-            <div className="my-auto space-x-2 ml-4">
-                {leading}
-            </div>
-            <div className="my-auto space-x-2 mr-4">
-                {trailing}
+    return (
+        <div className="sticky top-0 start-0 w-full h-20 px-4 shadow-sm pt-5">
+            <div className="w-full flex flex-wrap items-center justify-between mx-auto p-4">
+                <div className="flex flex-row shrink gap-8">
+                    {...leading}
+                </div>
+                <div className="flex flex-row shrink gap-8">
+                    {...trailing}
+                </div>
             </div>
         </div>
     );

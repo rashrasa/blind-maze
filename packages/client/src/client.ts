@@ -72,8 +72,6 @@ export class GameClient {
         this.lastThisPlayerSnapshot = null;
         this.keysPressed = new Map()
         this.disposed = false
-
-        requestAnimationFrame(this.renderUntilStopped.bind(this))
     }
 
     public dispose() {
@@ -136,6 +134,7 @@ export class GameClient {
             this.webSocketConnection = connection.ws
         }
         this.sendUpdateToServer(connection.ws, intitalPlayerState)
+        requestAnimationFrame(this.renderUntilStopped.bind(this))
         return true;
     }
 

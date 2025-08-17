@@ -1,9 +1,9 @@
 import NavBar from "../components/navbar/navbar";
 
-export default function Leaderboards(){
+export default async function Leaderboards() {
     return (
         <div>
-            <NavBar/>
+            <NavBar />
         </div>
     )
 }

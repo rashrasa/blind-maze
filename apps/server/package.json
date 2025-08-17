@@ -7,9 +7,9 @@
     "dev": "pnpm tsx server.ts"
   },
   "dependencies": {
-    "@blind-maze/types": "workspace: *",
-    "tsx": "^4.20.3",
-    "ws": "^8.18.2"
+    "@blind-maze/types": "workspace:^",
+    "tsx": "^4.20.4",
+    "ws": "^8.18.3"
   },
   "devDependencies": {
     "@types/ws": "^8.18.1"

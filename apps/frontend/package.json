@@ -10,25 +10,30 @@
   },
   "dependencies": {
     "@blind-maze/client": "workspace:^",
-    "@blind-maze/random": "workspace: *",
+    "@blind-maze/random": "workspace:^",
+    "@supabase/ssr": "^0.6.1",
+    "@supabase/supabase-js": "^2.55.0",
+    "@tailwindcss/postcss": "^4.1.12",
     "crypto-browserify": "^3.12.1",
-    "next": "^15.3.3",
-    "react": "^19.1.0",
-    "react-dom": "^19.1.0"
+    "next": "^15.4.6",
+    "react": "^19.1.1",
+    "react-dom": "^19.1.1",
+    "supabase": "^2.34.3",
+    "typescript": "^5.9.2"
   },
   "devDependencies": {
-    "@blind-maze/eslint-config": "workspace: *",
-    "@blind-maze/types": "workspace: *",
-    "@blind-maze/typescript-config": "workspace: *",
-    "@eslint/eslintrc": "^3",
+    "@blind-maze/eslint-config": "workspace:^",
+    "@blind-maze/types": "workspace:^",
+    "@blind-maze/typescript-config": "workspace:^",
+    "@eslint/eslintrc": "^3.3.1",
     "@types/jest": "^30.0.0",
-    "@types/node": "^20.19.1",
-    "@types/react": "^19",
-    "@types/react-dom": "^19",
-    "eslint": "^9",
-    "eslint-config-next": "15.1.8",
-    "jest": "^30.0.2",
-    "postcss": "^8",
-    "tailwindcss": "^3.4.1"
+    "@types/node": "^24.3.0",
+    "@types/react": "^19.1.10",
+    "@types/react-dom": "^19.1.7",
+    "eslint": "^9.33.0",
+    "eslint-config-next": "15.4.6",
+    "jest": "^30.0.5",
+    "postcss": "^8.5.6",
+    "tailwindcss": "^4.1.12"
   }
 }

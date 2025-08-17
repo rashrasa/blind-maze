@@ -17,8 +17,8 @@
     "websocket-as-promised": "^3.0.1"
   },
   "devDependencies": {
-    "@blind-maze/types": "workspace: *",
-    "@blind-maze/typescript-config": "workspace: *",
-    "@blind-maze/eslint-config": "workspace: *"
+    "@blind-maze/eslint-config": "workspace:^",
+    "@blind-maze/types": "workspace:^",
+    "@blind-maze/typescript-config": "workspace:^"
   }
 }

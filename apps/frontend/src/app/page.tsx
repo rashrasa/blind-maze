@@ -1,25 +1,21 @@
-'use client';
-
-import GameContainer from "./components/game_container/game_container";
+import { createClient } from '@/utils/supabase/server';
 import NavBar from "./components/navbar/navbar";
-import { useEffect } from "react";
-import init, { hello_wasm } from "@blind-maze/random";
 
-export default function Home() {
-  useEffect(() => {
-    init().then((result) => {
-      hello_wasm()
-    })
-  });
+import GameContainer from "@/app/components/game_container/game_container";
+
+
+export default async function Page() {
   return (
     <div className="">
-      <main className="z-0">
+      <main className='flex flex-col mt-24'>
         <NavBar />
-        <div className="">
-          <GameContainer />
+        <div>
+          <div>
+            <GameContainer />
+          </div>
         </div>
       </main>
-      <footer className="row-start-3 flex gap-6 flex-wrap items-center justify-center">
+      <footer className="row-start-3 h-20 items-center justify-center">
       </footer>
     </div>
   );

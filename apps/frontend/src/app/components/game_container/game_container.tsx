@@ -4,6 +4,8 @@ import { GameClient } from "@blind-maze/client";
 import { ReactNode, useEffect, useLayoutEffect, useRef, useState } from "react";
 import { Player } from "@blind-maze/types";
 
+import init, { hello_wasm } from "@blind-maze/random";
+
 enum GameClientMenu {
     MAIN_MENU,
     SETTINGS_MENU,
@@ -25,6 +27,11 @@ const player: Player = {
 }
 
 export default function GameContainer() {
+    useEffect(() => {
+        init().then((result) => {
+            hello_wasm()
+        })
+    });
     const container = useRef<HTMLDivElement | null>(null);
     const [menuState, setMenuState] = useState<GameClientState>({ menu: GameClientMenu.MAIN_MENU });
     const [showClient, setShowClient] = useState(false);
