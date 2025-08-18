@@ -1,5 +1,5 @@
 import NavBar from "../components/navbar/navbar";
-import LoginButton from "./login_button";
+import LoginForm from "./login_form";
 
 export default async function Authentication() {
     return (
@@ -7,7 +7,7 @@ export default async function Authentication() {
             <NavBar />
             <div className="flex flex-col items-center">
                 <div className="flex flex-col items-center rounded-4xl w-[70%] h-[800px] shadow-2xl">
-                    <LoginButton />
+                    <LoginForm />
                 </div>
             </div>
         </div>
