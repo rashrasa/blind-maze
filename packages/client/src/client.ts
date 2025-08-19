@@ -260,24 +260,24 @@ export class GameClient {
 
     private handleKeyUp(event: KeyboardEvent) {
         const inputKey = event.code
-        const previous = this.keysPressed.get(inputKey)
         if (this.lastThisPlayerSnapshot == null) {
             throw Error("Unexpected Error: thisPlayer state is null")
         }
-        if (previous == undefined || previous == false) {
-            return;
-        }
         switch (inputKey) {
             case "ArrowUp":
+                event.preventDefault()
                 this.keysPressed.set("ArrowUp", false)
                 break;
             case "ArrowDown":
+                event.preventDefault()
                 this.keysPressed.set("ArrowDown", false)
                 break;
             case "ArrowLeft":
+                event.preventDefault()
                 this.keysPressed.set("ArrowLeft", false)
                 break;
             case "ArrowRight":
+                event.preventDefault()
                 this.keysPressed.set("ArrowRight", false)
                 break;
             default:
@@ -288,12 +288,8 @@ export class GameClient {
 
     private handleKeyDown(event: KeyboardEvent) {
         const inputKey = event.code
-        const previous = this.keysPressed.get(inputKey)
         if (this.lastThisPlayerSnapshot == null) {
             throw Error("Unexpected Error: thisPlayer state is null")
-        }
-        if (previous != undefined && previous == true) {
-            return;
         }
         switch (inputKey) {
             case "ArrowUp":
@@ -326,7 +322,7 @@ export class GameClient {
             x: 0,
             y: 0
         };
-        // refreshInputState();
+
         if (this.keysPressed.get("ArrowUp")) velocity.y -= PLAYER_SPEED;
         if (this.keysPressed.get("ArrowDown")) velocity.y += PLAYER_SPEED;
         if (this.keysPressed.get("ArrowLeft")) velocity.x -= PLAYER_SPEED;
