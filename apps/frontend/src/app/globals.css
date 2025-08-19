@@ -1,8 +1,4 @@
-@layer theme, base, components, utilities;
-
-@import "tailwindcss/theme" layer(theme);
-@import "tailwindcss/preflight" layer(preflight);
-@import "tailwindcss/utilities" layer(utilities);
+@import "tailwindcss";
 
 
 :root {

@@ -2,21 +2,16 @@ import { createClient } from '@/utils/supabase/server';
 import NavBar from "./components/navbar/navbar";
 
 import GameContainer from "@/app/components/game_container/game_container";
-
+import React from 'react';
 
 export default async function Page() {
   return (
-    <div className="">
-      <main className='flex flex-col mt-24'>
-        <NavBar />
-        <div>
-          <div>
-            <GameContainer />
-          </div>
+    <main>
+      <div>
+        <div className="min-h-[1600px]">
+          <GameContainer />
         </div>
-      </main>
-      <footer className="row-start-3 h-20 items-center justify-center">
-      </footer>
-    </div>
+      </div>
+    </main>
   );
 }

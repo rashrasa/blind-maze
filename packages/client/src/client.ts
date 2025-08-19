@@ -44,7 +44,8 @@ export class GameClient {
     constructor(player: Player, clientContainer: HTMLElement, viewPortWidthPx: number, viewPortHeightPx: number) {
         this.container = document.createElement("div");
         this.container.className = "w-[600px] h-[600px]"
-        this.container.style.visibility = "hidden"
+
+        this.container.style.display = "none"
 
         this.viewPortWidthPx = viewPortWidthPx;
         this.viewPortHeightPx = viewPortHeightPx;
@@ -140,10 +141,10 @@ export class GameClient {
 
     public setVisibility(visible: boolean) {
         if (visible) {
-            this.container.style.visibility = "visible"
+            this.container.style.display = "block"
         }
         else {
-            this.container.style.visibility = "hidden"
+            this.container.style.display = "none"
         }
         this.isVisible = visible;
     }

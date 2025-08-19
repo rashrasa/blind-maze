@@ -8,48 +8,47 @@ interface NavBarElementData {
 
 function NavBarItem(parameters: NavBarElementData) {
     return (
-        <div
-            key={parameters.key}
-            className="rounded-lg hover:bg-sky-200 hover:cursor-pointer active:bg-sky-300 p-2"
+        <Link key={parameters.key}
+            href={parameters.route}
+            className="text-2xl rounded-lg hover:bg-sky-200 hover:cursor-pointer active:bg-sky-300"
         >
-            <Link
-                href={"" + parameters.route}
-                className="text-2xl"
-            >
-                {parameters.displayName}
-            </Link>
-        </div>
+            {parameters.displayName}
+        </Link>
     );
 }
 
 export default function NavBar() {
-    let leading: React.ReactNode[] = [
-        NavBarItem({
+    let leading: NavBarElementData[] = [
+        {
             key: "home",
             displayName: "Home",
             route: "/"
-        }),
-        NavBarItem({
+        },
+        {
             key: "leaderboards",
             displayName: "Leaderboards",
             route: "/leaderboards"
-        })
+        }
     ]
-    let trailing: React.ReactNode[] = [
-        NavBarItem({
-            key: "auth",
+    let trailing: NavBarElementData[] = [
+        {
+            key: "authentication",
             displayName: "Sign In",
             route: "/login"
-        })
+        }
     ]
     return (
-        <div className="sticky top-0 start-0 w-full h-20 px-4 shadow-sm pt-5">
-            <div className="w-full flex flex-wrap items-center justify-between mx-auto p-4">
-                <div className="flex flex-row shrink gap-8">
-                    {...leading}
+        <div className=''>
+            <div className="flex justify-between items-center sticky w-full top-0 h-20 shadow-sm bg-white px-8">
+                <div className="flex items-center gap-8">
+                    {leading.map(item => (
+                        <NavBarItem {...{ key: item.key, displayName: item.displayName, route: item.route }} />
+                    ))}
                 </div>
-                <div className="flex flex-row shrink gap-8">
-                    {...trailing}
+                <div className="flex items-center gap-8">
+                    {trailing.map(item => (
+                        <NavBarItem {...{ key: item.key, displayName: item.displayName, route: item.route }} />
+                    ))}
                 </div>
             </div>
         </div>
