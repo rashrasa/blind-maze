@@ -259,6 +259,7 @@ export class GameClient {
     }
 
     private handleKeyUp(event: KeyboardEvent) {
+        if (!this.isVisible) return;
         const inputKey = event.code
         if (this.lastThisPlayerSnapshot == null) {
             throw Error("Unexpected Error: thisPlayer state is null")
@@ -287,6 +288,7 @@ export class GameClient {
     }
 
     private handleKeyDown(event: KeyboardEvent) {
+        if (!this.isVisible) return;
         const inputKey = event.code
         if (this.lastThisPlayerSnapshot == null) {
             throw Error("Unexpected Error: thisPlayer state is null")
@@ -315,6 +317,7 @@ export class GameClient {
     }
 
     private handleInputState() {
+        if (!this.isVisible) return;
         if (this.lastThisPlayerSnapshot == null) {
             throw Error("Unexpected Error: thisPlayer state is null")
         }
