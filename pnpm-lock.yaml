@@ -23,9 +23,9 @@ importers:
       '@blind-maze/client':
         specifier: workspace:^
         version: link:../../packages/client
-      '@blind-maze/random':
+      '@blind-maze/rust-client':
         specifier: workspace:^
-        version: link:../../packages/random
+        version: link:../../packages/rust-client
       '@supabase/ssr':
         specifier: ^0.6.1
         version: 0.6.1(@supabase/supabase-js@2.55.0)
@@ -162,7 +162,7 @@ importers:
         specifier: ^8.39.1
         version: 8.39.1(eslint@9.33.0(jiti@2.5.1))(typescript@5.9.2)
 
-  packages/random: {}
+  packages/rust-client: {}
 
   packages/types: {}
 

@@ -1,5 +1,5 @@
 [package]
-name = "random"
+name = "rust-client"
 version = "0.1.0"
 edition = "2024"
 
@@ -7,6 +7,7 @@ edition = "2024"
 env_logger = "0.11.8"
 log = "0.4.27"
 wasm-bindgen = "0.2.100"
+wasm-bindgen-futures = "0.4.50"
 wasm-logger = "0.2.0"
 
 [dev-dependencies]

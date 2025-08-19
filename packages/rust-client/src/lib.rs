@@ -6,7 +6,7 @@ use wasm_bindgen::prelude::*;
 static INIT: Once = Once::new();
 
 #[wasm_bindgen]
-pub fn hello_wasm() {
+pub async fn hello_wasm() {
     INIT.call_once(|| {
         wasm_logger::init(wasm_logger::Config::default());
     });

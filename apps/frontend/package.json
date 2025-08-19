@@ -10,7 +10,7 @@
   },
   "dependencies": {
     "@blind-maze/client": "workspace:^",
-    "@blind-maze/random": "workspace:^",
+    "@blind-maze/rust-client": "workspace:^",
     "@supabase/ssr": "^0.6.1",
     "@supabase/supabase-js": "^2.55.0",
     "@tailwindcss/postcss": "^4.1.12",
