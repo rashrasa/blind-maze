@@ -15,7 +15,7 @@ const geistMono = Geist_Mono({
 
 export const metadata: Metadata = {
   title: "Blind Maze",
-  description: "Simple multiplayer game for demonstrating software engineering skills",
+  description: "Simple multiplayer game",
 };
 
 export default function RootLayout({

@@ -10,7 +10,7 @@ function NavBarItem(parameters: NavBarElementData) {
     return (
         <Link key={parameters.key}
             href={parameters.route}
-            className="text-2xl rounded-lg hover:bg-sky-200 hover:cursor-pointer active:bg-sky-300"
+            className="text-2xl rounded-lg hover:bg-sky-200 hover:cursor-pointer active:bg-sky-300 p-2"
         >
             {parameters.displayName}
         </Link>

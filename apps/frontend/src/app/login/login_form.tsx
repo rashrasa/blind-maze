@@ -12,7 +12,7 @@ export default function LoginForm() {
     const [password, setPassword] = useState("");
 
     return (
-        <form className="flex flex-col gap-8"
+        <form
             onSubmit={(event) => {
                 event.preventDefault();
                 supabase.auth.signInWithPassword({
@@ -23,21 +23,35 @@ export default function LoginForm() {
                     router.push("/")
                 })
             }} >
-            <label>Email:
-                <input type="text" onChange={(e) => {
-                    setEmail(e.target.value)
-                }} />
-            </label>
-            <label>Password:
-                <input type="password" onChange={(e) => {
-                    setPassword(e.target.value)
-                }} />
-            </label>
-            <input
-                type="submit"
-                value={"Sign In"}
-                className="rounded-xl p-8 bg-amber-200 border-amber-900 border-2 hover:cursor-pointer"
-            />
+            <div className="flex flex-col w-full border-2 border-black rounded-2xl p-8 text-lg font-semibold font-sans items-center space-y-8">
+                <div className="flex flex-row gap-8">
+                    <div className="flex flex-col justify-stretch space-y-4">
+                        <label>Email:</label>
+                        <label>Password:</label>
+                    </div>
+
+                    <div className="flex flex-col justify-stretch flex-1 space-y-4">
+                        <input
+                            type="text"
+                            className="ml-8 border border-black rounded-sm"
+                            onChange={(e) => {
+                                setEmail(e.target.value)
+                            }} />
+                        <input
+                            type="password"
+                            className="ml-8 border border-black rounded-sm"
+                            onChange={(e) => {
+                                setPassword(e.target.value)
+                            }} />
+                    </div>
+
+                </div>
+                <input
+                    type="submit"
+                    value={"Sign In"}
+                    className="rounded-xl bg-sky-200 border-sky-900 border-2 hover:cursor-pointer w-[50%]"
+                />
+            </div>
         </form>
     )
 }
