@@ -9,7 +9,7 @@
     "pkg/**"
   ],
   "scripts": {
-    "dev": "wasm-pack build --target web --out-dir ./pkg --dev",
+    "compile": "wasm-pack build --target web --out-dir pkg --dev",
     "build": "wasm-pack build --target web --out-dir pkg --release"
   },
   "devDependencies": {

@@ -4,7 +4,7 @@ import { GameClient } from "@blind-maze/client";
 import { ReactNode, useEffect, useLayoutEffect, useRef, useState } from "react";
 import { Player } from "@blind-maze/types";
 
-import init, { hello_wasm } from "@blind-maze/rust-client";
+import init, { hello_wasm, connect_to_server } from "@blind-maze/rust-client";
 
 enum GameClientMenu {
     MAIN_MENU,
@@ -29,8 +29,10 @@ const player: Player = {
 export default function GameContainer() {
     useEffect(() => {
         init().then(() => {
-            hello_wasm().then(() => {
-                console.log("Async rust function completed.")
+            connect_to_server("127.0.0.1", 3000).then((result) => {
+                console.log(`Async rust function completed. Result: ${result}`)
+            }).catch((err) => {
+                console.error(`Caught error from async wasm function: ${err}`)
             })
         })
     });
