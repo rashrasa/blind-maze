@@ -1,14 +1,14 @@
 import Link from 'next/link';
 
 interface NavBarElementData {
-    key: string,
+    passedKey: string,
     displayName: string,
     route: string
 }
 
 function NavBarItem(parameters: NavBarElementData) {
     return (
-        <Link key={parameters.key}
+        <Link key={parameters.passedKey}
             href={parameters.route}
             className="text-2xl rounded-lg hover:bg-sky-200 hover:cursor-pointer active:bg-sky-300 p-2"
         >
@@ -20,19 +20,19 @@ function NavBarItem(parameters: NavBarElementData) {
 export default function NavBar() {
     let leading: NavBarElementData[] = [
         {
-            key: "home",
+            passedKey: "home",
             displayName: "Home",
             route: "/"
         },
         {
-            key: "leaderboards",
+            passedKey: "leaderboards",
             displayName: "Leaderboards",
             route: "/leaderboards"
         }
     ]
     let trailing: NavBarElementData[] = [
         {
-            key: "authentication",
+            passedKey: "authentication",
             displayName: "Sign In",
             route: "/login"
         }
@@ -42,12 +42,12 @@ export default function NavBar() {
             <div className="flex justify-between items-center sticky w-full top-0 h-20 shadow-sm bg-white px-8">
                 <div className="flex items-center gap-8">
                     {leading.map(item => (
-                        <NavBarItem {...{ key: item.key, displayName: item.displayName, route: item.route }} />
+                        <NavBarItem key={item.passedKey} passedKey={item.passedKey} displayName={item.displayName} route={item.route} />
                     ))}
                 </div>
                 <div className="flex items-center gap-8">
                     {trailing.map(item => (
-                        <NavBarItem {...{ key: item.key, displayName: item.displayName, route: item.route }} />
+                        <NavBarItem key={item.passedKey} passedKey={item.passedKey} displayName={item.displayName} route={item.route} />
                     ))}
                 </div>
             </div>
