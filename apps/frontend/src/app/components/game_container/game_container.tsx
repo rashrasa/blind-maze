@@ -35,7 +35,7 @@ export default function GameContainer() {
                 console.error(`Caught error from async wasm function: ${err}`)
             })
         })
-    });
+    }, []);
     const container = useRef<HTMLDivElement | null>(null);
     const [menuState, setMenuState] = useState<GameClientState>({ menu: GameClientMenu.MAIN_MENU });
     const [showClient, setShowClient] = useState(false);
