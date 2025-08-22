@@ -43,7 +43,7 @@ export default function GameContainer() {
 
             }}
         >
-            <canvas id={get_canvas_id()} className="w-full h-full">
+            <canvas id={get_canvas_id()}>
 
             </canvas>
 
