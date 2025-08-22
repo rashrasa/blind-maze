@@ -3,8 +3,12 @@ use std::{sync::Once, thread::sleep, time::Duration};
 use gloo_timers::future::TimeoutFuture;
 use log::{Level, debug, error, info, log_enabled, warn};
 use wasm_bindgen::prelude::*;
+use web_sys::{Window, js_sys::Function};
 
 static INIT: Once = Once::new();
+
+#[wasm_bindgen]
+extern "C" {}
 
 #[wasm_bindgen]
 pub async fn hello_wasm() {
@@ -20,7 +24,7 @@ pub async fn connect_to_server(host_ip: &str, port: i16) -> Result<String, Strin
     // Check if ip is in a valid format
     TimeoutFuture::new(3000).await;
     // Attempt to connect to server
-    let connection_successful = false;
+    let connection_successful = true;
 
     if connection_successful {
         // If success, return simple message
@@ -33,6 +37,3 @@ pub async fn connect_to_server(host_ip: &str, port: i16) -> Result<String, Strin
         return Err("Could not connect to server.".to_string());
     }
 }
-
-#[wasm_bindgen]
-pub async fn set_visible() {}
