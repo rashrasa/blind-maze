@@ -1,37 +1,75 @@
-use std::f64::consts::PI;
+use std::{cell::RefCell, rc::Rc};
 
-use log::{Level, debug, error, info, log_enabled, warn};
+use log::{debug, info};
+// TODO: Replace all unwrap calls with better error handling
 use wasm_bindgen::prelude::*;
-use web_sys::{CanvasRenderingContext2d, HtmlCanvasElement, Window, js_sys::Function};
+use web_sys::{
+    HtmlCanvasElement, KeyboardEvent, WebGl2RenderingContext, WebSocket, Window, js_sys::Function,
+};
 
-struct Player {
-    uuid: String,
-    display_name: String,
-    /// RGBA
-    color: (u8, u8, u8, f32),
-    avatar_url: String,
-}
-
-struct PlayerState {
-    player: Player,
-    position: (f64, f64),
-    velocity: (f32, f32),
-}
-
-enum Tiles {
-    EMPTY,
-    BLOCKED,
-}
-
-struct GameState {
-    player_states: Vec<PlayerState>,
-    map: Vec<Vec<Tiles>>,
-}
+mod communication;
+mod input;
+mod map;
+mod player;
 
 static CLIENT_CANVAS_ID: &str = "rust_canvas_client_wasm";
 
 #[wasm_bindgen]
+pub fn get_canvas_id() -> String {
+    return String::from(CLIENT_CANVAS_ID);
+}
+
+#[wasm_bindgen]
 extern "C" {}
+
+#[wasm_bindgen(start)]
+/// Will run on page load
+pub async fn main() {
+    wasm_logger::init(wasm_logger::Config::default());
+    info!("Successfully initialized rust-client.");
+}
+
+struct GameState {
+    player_states: Vec<player::PlayerState>,
+    map: map::Map,
+}
+
+impl GameState {
+    pub fn tick(&mut self, ms: f64) {
+        for player_state in self.player_states.iter_mut() {
+            player_state.tick(ms)
+        }
+    }
+}
+
+struct Render {
+    closure: Closure<dyn FnMut()>,
+    handle: i32,
+}
+
+impl Render {
+    pub fn new<F: 'static>(f: F) -> Self
+    where
+        F: FnMut(),
+    {
+        let closure = Closure::new(f);
+
+        let handle = get_window()
+            .request_animation_frame(closure.as_ref().unchecked_ref())
+            .unwrap();
+
+        return Render {
+            closure: closure,
+            handle: handle,
+        };
+    }
+}
+
+impl Drop for Render {
+    fn drop(&mut self) {
+        get_window().cancel_animation_frame(self.handle).unwrap();
+    }
+}
 
 fn get_window() -> Window {
     return web_sys::window().unwrap();
@@ -48,77 +86,154 @@ fn get_canvas() -> HtmlCanvasElement {
 }
 
 #[wasm_bindgen]
-pub fn get_canvas_id() -> String {
-    return CLIENT_CANVAS_ID.to_string();
-}
+pub async fn connect_to_server_and_start_client(
+    host_ip: &str,
+    port: i16,
+) -> Result<String, String> {
+    // Attempt to connect to server
+    debug!("Attempting to connect to WebSocket server.");
+    let connection: WebSocket =
+        match WebSocket::new(format!("ws://{ip}:{port}", ip = host_ip, port = port).as_str()) {
+            Ok(ws) => ws,
+            Err(e) => {
+                return Err(format!(
+                    "Could not connect to server at ws://{ip}:{port}. Error: {error}",
+                    ip = host_ip,
+                    port = port,
+                    error = e.as_string().unwrap()
+                ));
+            }
+        };
+    debug!(
+        "Successfully connected to WebSocket server at ws://{}:{}.",
+        host_ip, port
+    );
 
-#[wasm_bindgen(start)]
-/// Will run on page load
-pub async fn main() {
-    wasm_logger::init(wasm_logger::Config::default());
-}
+    debug!("Attempting to send message over WebSocket connection.");
 
-fn render(state: GameState) {
-    let canvas = get_canvas();
-    let ctx = canvas
-        .get_context("2d")
-        .unwrap()
-        .unwrap()
-        .dyn_into::<CanvasRenderingContext2d>()
+    connection
+        .send_with_str(String::from("Test websocket connection").as_str())
         .unwrap();
 
-    let center_pos: (f64, f64) = state.player_states.get(0).unwrap().position;
+    debug!("Successfully sent message.");
 
-    for player_state in state.player_states {
-        ctx.set_fill_style_str(
-            format!(
-                "RGBA({},{},{},{})",
-                player_state.player.color.0,
-                player_state.player.color.1,
-                player_state.player.color.2,
-                player_state.player.color.3
-            )
-            .as_str(),
-        );
-        ctx.arc(center_pos.0, center_pos.1, 10.0, 0.0, 2.0 * PI)
-            .unwrap();
-        ctx.fill();
-    }
+    debug!(
+        "Attempting to create client and bind to existing canvas with id {}",
+        get_canvas_id()
+    );
+
+    // Create client
+    let mut client = GameClient {
+        connection: connection,
+        context: get_canvas()
+            .get_context("webgl2")
+            .unwrap()
+            .unwrap()
+            .dyn_into::<WebGl2RenderingContext>()
+            .unwrap(),
+        input: input::InputState::default(),
+        this_player_uuid: String::from("34534534534534"),
+        state: GameState {
+            player_states: vec![player::PlayerState::new(
+                player::Player::new(
+                    String::from("34534534534534"),
+                    String::from("Name"),
+                    (255, 255, 0, 1.0),
+                    String::from(""),
+                ),
+                (10.0, 10.0),
+                (0.0, 0.0),
+            )],
+            map: map::Map::new(map::MapStructure::SquareMap(vec![vec![map::Tile::BLOCKED]]))
+                .unwrap(),
+        },
+    };
+    let render_object = Render::new(move || {
+        client.render();
+    });
+
+    return Ok(String::from(
+        "Successfully connected to server and started client.",
+    ));
 }
 
-#[wasm_bindgen]
-/// Game client entry point. On a successful connection, the render loop will start immediately
-pub async fn connect_to_server(host_ip: &str, port: i16) -> Result<(), String> {
-    // Attempt to connect to server
-    let connection_successful = true;
-
-    if connection_successful {
-        // If success, show client and start render loop
-
-        // Attach key listeners
-        //canvas.add_event_listener_with_callback("on_key_down", || on_key_down.);
-
-        //
-        render(GameState {
-            player_states: vec![PlayerState {
-                player: Player {
-                    uuid: "893245897239".to_string(),
-                    display_name: "name".to_string(),
-                    color: (255, 0, 255, 1.0),
-                    avatar_url: "".to_string(),
-                },
-                position: (15.0, 15.0),
-                velocity: (0.0, 0.0),
-            }],
-            map: vec![vec![Tiles::BLOCKED]],
-        });
-        Ok(())
-    } else {
-        error!("Could not connect to server.");
-        return Err("Could not connect to server.".to_string());
-    }
+pub struct GameClient {
+    connection: WebSocket,
+    context: WebGl2RenderingContext,
+    input: input::InputState,
+    this_player_uuid: String,
+    state: GameState,
 }
 
-fn on_key_down(key_name: &str) {}
+impl GameClient {
+    fn tick(&mut self, ms: f64) {
+        self.handle_input_state();
+        self.state.tick(ms)
+    }
 
-fn on_key_up(key_name: &str) {}
+    fn render(&mut self) {
+        let center_pos: &(f64, f64) = self
+            .state
+            .player_states
+            .iter()
+            .find(|p| {
+                return p.get_player().get_id() == self.this_player_uuid;
+            })
+            .unwrap()
+            .get_pos();
+
+        for player_state in self.state.player_states.iter() {}
+
+        info!("Successfully made a render call.");
+    }
+
+    fn handle_input_state(&mut self) {
+        todo!();
+    }
+
+    fn on_key_down(&mut self, event: KeyboardEvent) {
+        let key_name = event.code();
+        match key_name.as_str() {
+            "ArrowUp" => {
+                event.prevent_default();
+                self.input.up = true;
+            }
+            "ArrowDown" => {
+                event.prevent_default();
+                self.input.down = true;
+            }
+            "ArrowLeft" => {
+                event.prevent_default();
+                self.input.left = true;
+            }
+            "ArrowRight" => {
+                event.prevent_default();
+                self.input.right = true;
+            }
+            _ => {}
+        }
+    }
+
+    fn on_key_up(&mut self, event: KeyboardEvent) {
+        let key_name = event.code();
+        match key_name.as_str() {
+            "ArrowUp" => {
+                event.prevent_default();
+                self.input.up = true;
+            }
+            "ArrowDown" => {
+                event.prevent_default();
+                self.input.down = true;
+            }
+            "ArrowLeft" => {
+                event.prevent_default();
+                self.input.left = true;
+            }
+            "ArrowRight" => {
+                event.prevent_default();
+                self.input.right = true;
+            }
+            _ => {}
+        }
+    }
+}

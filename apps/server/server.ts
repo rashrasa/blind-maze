@@ -36,6 +36,7 @@ server.on("connection", (connection) => {
 
     // Handle inputs
     connection.on('message', async (event) => {
+        console.log(`Received message ${event.toString()}`)
         let playerState: PlayerSnapshot = playerStateFromBinary(event)
         console.log(`Received state: ${event}`)
         if (playerConnections.get(connection) == null) {
