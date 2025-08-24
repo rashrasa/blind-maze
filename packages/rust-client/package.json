@@ -1,0 +1,17 @@
+{
+  "name": "@blind-maze/rust-client",
+  "version": "0.0.1",
+  "private": true,
+  "type": "module",
+  "main": "pkg/rust_client.js",
+  "types": "pkg/rust_client.d.ts",
+  "files": [
+    "pkg/**"
+  ],
+  "scripts": {
+    "compile": "wasm-pack build --target bundler --out-dir pkg --dev",
+    "build": "wasm-pack build --target bundler --out-dir pkg --release"
+  },
+  "devDependencies": {
+  }
+}
