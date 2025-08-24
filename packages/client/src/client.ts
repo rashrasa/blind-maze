@@ -18,7 +18,6 @@ import "crypto";
 const PLAYER_SPEED = 10
 const PIXELS_PER_TILE = 50
 const PLAYER_SQUARE_LENGTH_TILES = .5
-const TICK_RATE = 240;
 
 // Appends itself to container
 export class GameClient {
@@ -40,6 +39,7 @@ export class GameClient {
     private keysPressed: Map<string, boolean>
     private isVisible = false;
     private disposed: boolean;
+    private lastRenderMs: number = 0;
 
     constructor(player: Player, clientContainer: HTMLElement, viewPortWidthPx: number, viewPortHeightPx: number) {
         this.container = document.createElement("div");
@@ -162,14 +162,12 @@ export class GameClient {
             return;
         }
         if (this.lastGameSnapshot != null || true) {
-            if ((timeElapsed) / (1000.0 / TICK_RATE) > this.updates) {
-                this.handleInputState()
-                this.tick(1000.0 / TICK_RATE);
-                this.renderGameOnCanvas(this.lastGameSnapshot)
-                this.updates++;
-                await this.sendUpdateToServer(this.webSocketConnection!, this.lastThisPlayerSnapshot!)
-            }
-
+            this.handleInputState()
+            this.tick(timeElapsed - this.lastRenderMs);
+            this.renderGameOnCanvas(this.lastGameSnapshot)
+            this.lastRenderMs = timeElapsed;
+            this.updates++;
+            await this.sendUpdateToServer(this.webSocketConnection!, this.lastThisPlayerSnapshot!)
         }
         requestAnimationFrame(this.renderUntilStopped.bind(this))
     }
