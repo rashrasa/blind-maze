@@ -36,22 +36,16 @@ server.on("connection", (connection) => {
 
     // Handle inputs
     connection.on('message', async (event) => {
-        console.log(`Received message ${event.toString()}`)
-
-        try {
-            let playerState: PlayerSnapshot;
-            playerState = playerStateFromBinary(event)
-            console.log(`Received state: ${event}`)
-            if (playerConnections.get(connection) == null) {
-                playerConnections.set(connection, playerState?.player.id)
-            }
-            playerStates.set(playerState?.player.id, playerState)
+        console.log(`Received message: ${event.toString()}`)
+        let playerState: PlayerSnapshot;
+        playerState = playerStateFromBinary(event)
+        console.log(`Received state: ${event}`)
+        if (playerConnections.get(connection) == null) {
+            playerConnections.set(connection, playerState?.player.id)
         }
-        catch {
-            console.error("Could not parse player state from message.")
-        }
-
+        playerStates.set(playerState?.player.id, playerState)
         await updateStateAndClients()
+
     })
 
     connection.on("close", (event) => {

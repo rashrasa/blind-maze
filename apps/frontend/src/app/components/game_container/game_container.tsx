@@ -4,8 +4,6 @@ import { GameClient } from "@blind-maze/client";
 import { ReactNode, useEffect, useLayoutEffect, useRef, useState } from "react";
 import { Player } from "@blind-maze/types";
 
-import { connect_to_server_and_start_client, get_canvas_id } from "@blind-maze/rust-client";
-
 enum GameClientMenu {
     MAIN_MENU,
     SETTINGS_MENU,
@@ -29,9 +27,15 @@ const player: Player = {
 export default function GameContainer() {
     const container = useRef<HTMLDivElement | null>(null);
     useLayoutEffect(() => {
-        connect_to_server_and_start_client("localhost", 3001).then(() => { })
-    }, [])
+        let client = new GameClient(player, container.current!, 600, 600);
+        client.connectToServer("ws://localhost:3001")
+        client.setVisibility(true)
 
+        return () => {
+            client.dispose()
+        }
+    }
+    )
     return (
         <div
             ref={container}
@@ -42,9 +46,7 @@ export default function GameContainer() {
 
             }}
         >
-            <canvas id={get_canvas_id()} height={600} width={600}>
 
-            </canvas>
 
         </div>
     )
