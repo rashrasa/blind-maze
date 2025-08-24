@@ -80,6 +80,8 @@ export class GameClient {
             console.error("Could not unbind keyboard events to window.");
         }
         else {
+            this.setVisibility(false)
+            this.webSocketConnection?.close()
             this.clientContainer.ownerDocument.defaultView?.removeEventListener("keydown", this.handleKeyDown.bind(this))
             this.clientContainer.ownerDocument.defaultView?.removeEventListener("keyup", this.handleKeyUp.bind(this))
         }
@@ -153,17 +155,21 @@ export class GameClient {
         return this.isVisible;
     }
 
-    private renderUntilStopped(timeElapsed: number) {
+    private async renderUntilStopped(timeElapsed: number) {
         if (this.disposed == true) {
             console.info("Shutting down renderer.");
+            cancelAnimationFrame(timeElapsed)
             return;
         }
         if (this.lastGameSnapshot != null || true) {
             if ((timeElapsed) / (1000.0 / TICK_RATE) > this.updates) {
+                this.handleInputState()
                 this.tick(1000.0 / TICK_RATE);
+                this.renderGameOnCanvas(this.lastGameSnapshot)
                 this.updates++;
+                await this.sendUpdateToServer(this.webSocketConnection!, this.lastThisPlayerSnapshot!)
             }
-            this.renderGameOnCanvas(this.lastGameSnapshot)
+
         }
         requestAnimationFrame(this.renderUntilStopped.bind(this))
     }
@@ -233,7 +239,7 @@ export class GameClient {
     }
 
     private async sendUpdateToServer(server: WebSocket, updatedState: PlayerSnapshot): Promise<void> {
-        server!.send(playerStateToBinary(updatedState));
+        server?.send(playerStateToBinary(updatedState));
     }
 
     // Main function for updating the game
@@ -253,9 +259,6 @@ export class GameClient {
             snapshotTimestampMs: Date.now()
         }
         this.lastThisPlayerSnapshot = updatedState;
-
-        // Update server state - fire and forget
-        this.sendUpdateToServer(this.webSocketConnection!, updatedState);
     }
 
     private handleKeyUp(event: KeyboardEvent) {
@@ -342,6 +345,6 @@ export class GameClient {
             velocity: velocity,
             snapshotTimestampMs: Date.now()
         }
-        this.sendUpdateToServer(this.webSocketConnection!, updatedState)
+        this.lastThisPlayerSnapshot = updatedState;
     }
 }

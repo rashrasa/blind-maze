@@ -55,7 +55,6 @@ server.on("connection", (connection) => {
         console.log(`Connection closed with ${connection.url}`)
     })
 
-    connection.send("Pong")
     console.log(`Connection ready with ${connection.url}.`)
 })
 
