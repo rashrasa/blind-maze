@@ -18,7 +18,7 @@ import "crypto";
 const PLAYER_SPEED = 10
 const PIXELS_PER_TILE = 50
 const PLAYER_SQUARE_LENGTH_TILES = .5
-const TICK_RATE = 1000;
+const TICK_RATE = 240;
 
 // Appends itself to container
 export class GameClient {

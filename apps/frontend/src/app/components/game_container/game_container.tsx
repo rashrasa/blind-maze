@@ -26,8 +26,12 @@ const player: Player = {
 
 export default function GameContainer() {
     const container = useRef<HTMLDivElement | null>(null);
+
+    const CLIENT_WIDTH_PX = 1800
+    const CLIENT_HEIGHT_PX = 900
+
     useLayoutEffect(() => {
-        let client = new GameClient(player, container.current!, 1600, 900);
+        let client = new GameClient(player, container.current!, CLIENT_WIDTH_PX, CLIENT_HEIGHT_PX);
         client.connectToServer("ws://localhost:3001")
         client.setVisibility(true)
 
@@ -41,8 +45,8 @@ export default function GameContainer() {
             ref={container}
             className="border-2 border-black box-border mx-auto mt-32"
             style={{
-                width: "1600px",
-                height: "900px",
+                width: `${CLIENT_WIDTH_PX}px`,
+                height: `${CLIENT_HEIGHT_PX}px`,
 
             }}
         >
