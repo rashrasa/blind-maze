@@ -37,12 +37,19 @@ server.on("connection", (connection) => {
     // Handle inputs
     connection.on('message', async (event) => {
         console.log(`Received message ${event.toString()}`)
-        let playerState: PlayerSnapshot = playerStateFromBinary(event)
-        console.log(`Received state: ${event}`)
-        if (playerConnections.get(connection) == null) {
-            playerConnections.set(connection, playerState.player.id)
+
+        try {
+            let playerState: PlayerSnapshot;
+            playerState = playerStateFromBinary(event)
+            console.log(`Received state: ${event}`)
+            if (playerConnections.get(connection) == null) {
+                playerConnections.set(connection, playerState?.player.id)
+            }
+            playerStates.set(playerState?.player.id, playerState)
         }
-        playerStates.set(playerState.player.id, playerState)
+        catch {
+            console.error("Could not parse player state from message.")
+        }
 
         await updateStateAndClients()
     })
@@ -54,6 +61,7 @@ server.on("connection", (connection) => {
         console.log(`Connection closed with ${connection.url}`)
     })
 
+    connection.send("Pong")
     console.log(`Connection ready with ${connection.url}.`)
 })
 

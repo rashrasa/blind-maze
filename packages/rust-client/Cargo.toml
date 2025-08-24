@@ -23,6 +23,12 @@ web-sys = {version = "0.3.77", features = [
 'WebGlShader',
 'Window',
 'WebSocket',
+'MessageEvent',
+"BinaryType",
+"Blob",
+"ErrorEvent",
+"FileReader",
+"ProgressEvent",
 'KeyboardEvent'
 ]}
 

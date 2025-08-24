@@ -1,10 +1,11 @@
 use std::{cell::RefCell, rc::Rc};
 
-use log::{debug, info};
+use log::{debug, error, info};
 // TODO: Replace all unwrap calls with better error handling
 use wasm_bindgen::prelude::*;
 use web_sys::{
-    HtmlCanvasElement, KeyboardEvent, WebGl2RenderingContext, WebSocket, Window, js_sys::Function,
+    HtmlCanvasElement, KeyboardEvent, MessageEvent, WebGl2RenderingContext, WebSocket, Window,
+    js_sys::{self, Function},
 };
 
 mod communication;
@@ -108,14 +109,32 @@ pub async fn connect_to_server_and_start_client(
         "Successfully connected to WebSocket server at ws://{}:{}.",
         host_ip, port
     );
+    connection.set_binary_type(web_sys::BinaryType::Arraybuffer);
+    let cloned_ws = connection.clone();
 
-    debug!("Attempting to send message over WebSocket connection.");
+    let on_message = Closure::<dyn FnMut(_)>::new(move |e: MessageEvent| {
+        if let Ok(txt) = e.data().dyn_into::<js_sys::JsString>() {
+            debug!("Received message from server: {}", txt);
+            debug!("Attempting to send message over WebSocket connection.");
 
-    connection
-        .send_with_str(String::from("Test websocket connection").as_str())
-        .unwrap();
+            match cloned_ws.send_with_str("Test websocket connection") {
+                Ok(_) => {
+                    debug!("Successfully sent message.");
+                }
+                Err(e) => {
+                    match e.js_typeof().as_string() {
+                        Some(e) => error!("{}", e),
+                        None => {
+                            error!("Unknown error occurred while trying to send WebSocket message",)
+                        }
+                    };
+                }
+            };
+        }
+    });
 
-    debug!("Successfully sent message.");
+    connection.set_onmessage(Some(on_message.as_ref().unchecked_ref()));
+    on_message.forget();
 
     debug!(
         "Attempting to create client and bind to existing canvas with id {}",
