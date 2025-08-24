@@ -246,17 +246,39 @@ export class GameClient {
             console.warn("Tried ticking without a player snaphot. Ignoring.")
             return;
         }
+
+        let mapWidth = this.lastGameSnapshot!.map.width;
+        let mapHeight = this.lastGameSnapshot!.map.height;
+
+        let currentX = this.lastThisPlayerSnapshot!.position.x
+        let currentY = this.lastThisPlayerSnapshot!.position.y
+
+        let currentVX = this.lastThisPlayerSnapshot!.velocity.x
+        let currentVY = this.lastThisPlayerSnapshot!.velocity.y
+
+        let newVX = this.lastThisPlayerSnapshot!.velocity.x
+        let newVY = this.lastThisPlayerSnapshot!.velocity.y
+
+        // Only calculating player -> tile collisions for now
+        if (currentX - PLAYER_SQUARE_LENGTH_TILES <= 1 && currentVX < 0) newVX = 0
+        else if (currentX + PLAYER_SQUARE_LENGTH_TILES >= mapWidth - 1 && currentVX > 0) newVX = 0
+
+        if (currentY - PLAYER_SQUARE_LENGTH_TILES <= 1 && currentVY < 0) newVY = 0
+        else if (currentY + PLAYER_SQUARE_LENGTH_TILES >= mapHeight - 1 && currentVY > 0) newVY = 0
+
+
         let updatedState: PlayerSnapshot = {
             isLeader: this.lastThisPlayerSnapshot!.isLeader,
             player: this.lastThisPlayerSnapshot!.player,
             position: {
-                x: this.lastThisPlayerSnapshot!.position.x + this.lastThisPlayerSnapshot!.velocity.x * milliseconds / 1000.0,
-                y: this.lastThisPlayerSnapshot!.position.y + this.lastThisPlayerSnapshot!.velocity.y * milliseconds / 1000.0
+                x: this.lastThisPlayerSnapshot!.position.x + newVX * milliseconds / 1000.0,
+                y: this.lastThisPlayerSnapshot!.position.y + newVY * milliseconds / 1000.0
             },
             velocity: this.lastThisPlayerSnapshot!.velocity,
             snapshotTimestampMs: Date.now()
         }
         this.lastThisPlayerSnapshot = updatedState;
+
     }
 
     private handleKeyUp(event: KeyboardEvent) {
