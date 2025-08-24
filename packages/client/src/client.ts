@@ -15,10 +15,10 @@ import type {
 import WebSocketAsPromised from "websocket-as-promised";
 import "crypto";
 
-const PLAYER_SPEED = 30
-const PIXELS_PER_TILE = 20
-const PLAYER_SQUARE_LENGTH_TILES = .9
-const TICK_RATE = 60;
+const PLAYER_SPEED = 10
+const PIXELS_PER_TILE = 50
+const PLAYER_SQUARE_LENGTH_TILES = .5
+const TICK_RATE = 1000;
 
 // Appends itself to container
 export class GameClient {
@@ -43,7 +43,7 @@ export class GameClient {
 
     constructor(player: Player, clientContainer: HTMLElement, viewPortWidthPx: number, viewPortHeightPx: number) {
         this.container = document.createElement("div");
-        this.container.className = "w-[600px] h-[600px]"
+        this.container.className = `w-[${viewPortWidthPx}px] h-[${viewPortHeightPx}px]`
 
         this.container.style.display = "none"
 
@@ -197,8 +197,8 @@ export class GameClient {
         const viewPortWidthPx = this.canvas.width
 
         const tiles: TileType[][] = state.map.tiles;
-
-        context.clearRect(0, 0, viewPortWidthPx, viewPortHeightPx)
+        context.fillStyle = "black"
+        context.fillRect(0, 0, viewPortWidthPx, viewPortHeightPx)
 
         context.strokeStyle = "black"
         context.lineWidth = 1
