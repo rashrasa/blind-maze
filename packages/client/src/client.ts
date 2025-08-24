@@ -161,7 +161,7 @@ export class GameClient {
             cancelAnimationFrame(timeElapsed)
             return;
         }
-        if (this.lastGameSnapshot != null || true) {
+        if (this.lastGameSnapshot != null) {
             this.handleInputState()
             this.tick(timeElapsed - this.lastRenderMs);
             this.renderGameOnCanvas(this.lastGameSnapshot)
@@ -178,8 +178,10 @@ export class GameClient {
             console.warn("Attempted to draw on non-existant canvas")
             return
         }
-        context.rect(0, 0, this.viewPortWidthPx, this.viewPortHeightPx);
-        context.fill()
+
+        context.fillStyle = "black"
+        context.lineWidth = 0;
+        context.fillRect(0, 0, this.viewPortWidthPx, this.viewPortHeightPx)
 
         if (state == null) {
             console.warn("Could not render full client, state is null");
@@ -191,23 +193,17 @@ export class GameClient {
         const CENTER_X = this.lastThisPlayerSnapshot?.position.x ?? 7.5
         const CENTER_Y = this.lastThisPlayerSnapshot?.position.y ?? 7.5
 
-        const viewPortHeightPx = this.canvas.height
-        const viewPortWidthPx = this.canvas.width
-
         const tiles: TileType[][] = state.map.tiles;
-        context.fillStyle = "black"
-        context.fillRect(0, 0, viewPortWidthPx, viewPortHeightPx)
 
         context.strokeStyle = "black"
-        context.lineWidth = 1
         // Row
         for (let i = 0; i < tiles.length; i++) {
             // Column
             for (let j = 0; j < tiles[i]!.length; j++) {
                 context.fillStyle = tiles[i]![j] ? "white" : "black"
                 context.fillRect(
-                    viewPortWidthPx / 2 + (-CENTER_X + j) * PIXELS_PER_TILE,
-                    viewPortHeightPx / 2 + (-CENTER_Y + i) * PIXELS_PER_TILE,
+                    this.viewPortWidthPx / 2 + (-CENTER_X + j) * PIXELS_PER_TILE,
+                    this.viewPortHeightPx / 2 + (-CENTER_Y + i) * PIXELS_PER_TILE,
                     PIXELS_PER_TILE,
                     PIXELS_PER_TILE
                 )
@@ -215,7 +211,7 @@ export class GameClient {
         }
 
         context.strokeStyle = "white"
-        context.lineWidth = 1
+        context.lineWidth = 2
         for (const player of playerStates) {
             if (player == undefined) {
                 console.warn("WARNING: Undefined player object received.")
@@ -226,14 +222,15 @@ export class GameClient {
             context.fillStyle = player.player.color ?? "white"
             context.beginPath()
             context.arc(
-                viewPortWidthPx / 2 + (-CENTER_X + playerX) * PIXELS_PER_TILE,
-                viewPortHeightPx / 2 + (-CENTER_Y + playerY) * PIXELS_PER_TILE,
+                this.viewPortWidthPx / 2 + (-CENTER_X + playerX) * PIXELS_PER_TILE,
+                this.viewPortHeightPx / 2 + (-CENTER_Y + playerY) * PIXELS_PER_TILE,
                 PLAYER_SQUARE_LENGTH_TILES * PIXELS_PER_TILE / 2,
                 0,
                 2 * Math.PI
             )
             context.fill()
         }
+
     }
 
     private async sendUpdateToServer(server: WebSocket, updatedState: PlayerSnapshot): Promise<void> {
@@ -260,11 +257,11 @@ export class GameClient {
         let newVY = this.lastThisPlayerSnapshot!.velocity.y
 
         // Only calculating player -> tile collisions for now
-        if (currentX - PLAYER_SQUARE_LENGTH_TILES <= 1 && currentVX < 0) newVX = 0
-        else if (currentX + PLAYER_SQUARE_LENGTH_TILES >= mapWidth - 1 && currentVX > 0) newVX = 0
+        if (currentX - PLAYER_SQUARE_LENGTH_TILES / 2.0 <= 1 && currentVX < 0) newVX = 0
+        else if (currentX + PLAYER_SQUARE_LENGTH_TILES / 2.0 >= mapWidth - 1 && currentVX > 0) newVX = 0
 
-        if (currentY - PLAYER_SQUARE_LENGTH_TILES <= 1 && currentVY < 0) newVY = 0
-        else if (currentY + PLAYER_SQUARE_LENGTH_TILES >= mapHeight - 1 && currentVY > 0) newVY = 0
+        if (currentY - PLAYER_SQUARE_LENGTH_TILES / 2.0 <= 1 && currentVY < 0) newVY = 0
+        else if (currentY + PLAYER_SQUARE_LENGTH_TILES / 2.0 >= mapHeight - 1 && currentVY > 0) newVY = 0
 
 
         let updatedState: PlayerSnapshot = {
