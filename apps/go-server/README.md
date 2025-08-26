@@ -1,0 +1,5 @@
+# (WIP) go-server
+
+Try with 0x0000002800000041000000000000000000000000000000000000000000000000000000000000000000000000
+
+Encodes a message of length 40, uuid of "A", position = (0.0, 0.0), velocity = (0.0, 0.0)
