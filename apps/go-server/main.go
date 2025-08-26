@@ -9,9 +9,18 @@ import (
 	"runtime"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/gorilla/websocket"
 )
+
+const ClientNewConnectionMessage uint8 = 0
+const ClientUpdateRequestMessage uint8 = 1
+
+// Global variables for now
+
+var gameState = new(GameState)
+var activeConnections []*Connection
 
 // Types
 
@@ -45,12 +54,6 @@ type GameState struct {
 type Vector2[T any] struct {
 	x T
 	y T
-}
-
-type BlindMazePlayerStateUpdateRequest struct {
-	uuid     string
-	position Vector2[float64]
-	velocity Vector2[float64]
 }
 
 type WebsocketHandler struct {
@@ -121,6 +124,45 @@ func (player Player) ToBinary() []byte {
 
 // ENCODING:
 // [
+// u32 avatarLength; 		string utf8 avatar;
+// u32 colorLength; 		string utf8 color;
+// u32 displayNameLength; 	string utf8 displayName;
+// u32 idLength; 			string utf8 id;
+// u32 usernameLength; 		string utf8 username;
+// ]
+func PlayerFromBinary(p []byte) Player {
+	var counter uint32 = 0
+
+	avatarLength := binary.BigEndian.Uint32(p[counter : counter+4])
+	avatar := string(p[counter : counter+avatarLength])
+	counter += avatarLength
+
+	colorLength := binary.BigEndian.Uint32(p[counter : counter+4])
+	color := string(p[counter : counter+colorLength])
+	counter += colorLength
+
+	displayNameLength := binary.BigEndian.Uint32(p[counter : counter+4])
+	displayName := string(p[counter : counter+displayNameLength])
+	counter += displayNameLength
+
+	idLength := binary.BigEndian.Uint32(p[counter : counter+4])
+	id := string(p[counter : counter+idLength])
+	counter += idLength
+
+	usernameLength := binary.BigEndian.Uint32(p[counter : counter+4])
+	username := string(p[counter : counter+usernameLength])
+
+	return Player{
+		avatarUrl:   avatar,
+		color:       color,
+		displayName: displayName,
+		id:          id,
+		username:    username,
+	}
+}
+
+// ENCODING:
+// [
 // bool isLeader 1 byte;
 // Player player;
 // f64 position x; 	f64 position y;
@@ -178,43 +220,78 @@ func (gameState GameState) ToBinary() []byte {
 	return buffer
 }
 
-// ENCODING:
-// bytes[0:4] = Message length,
-// bytes[4:Message Length-32] = uuid,
-// bytes[Message Length-32: Message Length-16] = position,
-// bytes[Message Length-16: Message Length] = velocity
-func ParseRequest(p []byte) (BlindMazePlayerStateUpdateRequest, error) {
-	messageLength := binary.BigEndian.Uint32(p[0:4])
-	if (messageLength) != uint32(len(p)) {
-		return BlindMazePlayerStateUpdateRequest{}, errors.New("message in an invalid format")
+func HandleBinaryMessage(p []byte, address string) error {
+	messageType := p[0]
+	switch messageType {
+	case ClientNewConnectionMessage:
+		// ENCODING:
+		// bytes[0:1] = message type
+		// bytes[1:5] = Player object
+		player := PlayerFromBinary(p[1:])
+		gameState.playerStates = append(gameState.playerStates, PlayerSnapshot{
+			player:              player,
+			position:            Vector2[float64]{0, 0},
+			velocity:            Vector2[float64]{0, 0},
+			isLeader:            false,
+			snapshotTimestampMs: uint64(time.Now().UnixMilli()),
+		})
+		for _, connection := range activeConnections {
+			if connection.address == address {
+				connection.uuid = player.id
+			}
+		}
+	case ClientUpdateRequestMessage:
+		// ENCODING:
+		// bytes[0:1] = message type
+		// bytes[1:5] = Message length,
+		// bytes[5:Message Length-32] = uuid,
+		// bytes[Message Length-32: Message Length-16] = position,
+		// bytes[Message Length-16: Message Length] = velocity
+		messageLength := binary.BigEndian.Uint32(p[1:5])
+		if (messageLength) != uint32(len(p)) {
+			return errors.New("message in an invalid format")
+		}
+
+		uuid := string(p[5 : messageLength-32])
+		position := Vector2[float64]{
+			x: math.Float64frombits(binary.BigEndian.Uint64(p[messageLength-32 : messageLength-24])),
+			y: math.Float64frombits(binary.BigEndian.Uint64(p[messageLength-24 : messageLength-16])),
+		}
+		velocity := Vector2[float64]{
+			x: math.Float64frombits(binary.BigEndian.Uint64(p[messageLength-16 : messageLength-8])),
+			y: math.Float64frombits(binary.BigEndian.Uint64(p[messageLength-8 : messageLength-0])),
+		}
+
+		log.Print("Attempting to find user with id " + uuid)
+		var playerSnapshot *PlayerSnapshot
+		for _, playerSnapshotItem := range gameState.playerStates {
+			if strings.Trim(playerSnapshotItem.player.id, "\n") == strings.Trim(uuid, "\n") {
+				log.Print("Found: " + playerSnapshotItem.player.id)
+				playerSnapshot = &playerSnapshotItem
+				break
+			}
+		}
+		if playerSnapshot != nil {
+			log.Print("Found user. id: " + playerSnapshot.player.id)
+			playerSnapshot.position = position
+			playerSnapshot.velocity = velocity
+
+		} else {
+			log.Print("Could not find user with id: " + uuid)
+		}
+
+	default:
+		return errors.New("unknown request type received")
 	}
 
-	uuid := string(p[4 : messageLength-32])
-	position := Vector2[float64]{
-		x: math.Float64frombits(binary.BigEndian.Uint64(p[messageLength-32 : messageLength-24])),
-		y: math.Float64frombits(binary.BigEndian.Uint64(p[messageLength-24 : messageLength-16])),
-	}
-	velocity := Vector2[float64]{
-		x: math.Float64frombits(binary.BigEndian.Uint64(p[messageLength-16 : messageLength-8])),
-		y: math.Float64frombits(binary.BigEndian.Uint64(p[messageLength-8 : messageLength-0])),
-	}
-
-	return BlindMazePlayerStateUpdateRequest{
-		uuid:     uuid,
-		position: position,
-		velocity: velocity,
-	}, nil
+	return nil
 }
 
 type Connection struct {
 	address    string
 	connection *websocket.Conn
+	uuid       string
 }
-
-// Global variables for now
-
-var gameState = new(GameState)
-var activeConnections []Connection
 
 func (wsh WebsocketHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	conn, err := wsh.upgrader.Upgrade(w, r, nil)
@@ -223,7 +300,6 @@ func (wsh WebsocketHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	log.Println("New connection from " + r.RemoteAddr)
-
 	defer conn.Close()
 	defer func() {
 		for i, connection := range activeConnections {
@@ -231,16 +307,16 @@ func (wsh WebsocketHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 				// Replaces connection to remove with the rest of the list
 				activeConnections[i] = activeConnections[len(activeConnections)-1]
 
-				// Replaces array with slice from 0 to length
+				// Replaces array with slice from 0 to length-1
 				activeConnections = activeConnections[:len(activeConnections)-1]
 			}
 		}
 		log.Println("Active connections: " + strconv.Itoa(len(activeConnections)))
 	}()
-	activeConnections = append(activeConnections, Connection{
-		address:    conn.RemoteAddr().String(),
-		connection: conn,
-	})
+
+	connection := new(Connection)
+	connection.address = conn.RemoteAddr().String()
+	connection.connection = conn
 
 	for {
 		messageType, bytes, err := conn.ReadMessage()
@@ -250,38 +326,22 @@ func (wsh WebsocketHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		}
 		switch messageType {
 		case websocket.BinaryMessage:
-			parsedRequest, err := ParseRequest(bytes)
-			if err != nil {
-				conn.WriteMessage(websocket.TextMessage, []byte("Received message in invalid format"))
-				return
-			}
 			defer func() {
 				if r := recover(); r != nil {
 					switch r := r.(type) {
 					case runtime.Error:
-						log.Print("Could not find user in list of player states." + r.Error() + "\n")
+						log.Print("Could not handle request properly." + r.Error() + "\n")
 					}
 				}
 			}()
-			log.Print("Attempting to find user with id " + parsedRequest.uuid)
-			var playerSnapshot *PlayerSnapshot
-			for _, playerSnapshotItem := range gameState.playerStates {
-				if strings.Trim(playerSnapshotItem.player.id, "\n") == strings.Trim(parsedRequest.uuid, "\n") {
-					log.Print("Found: " + playerSnapshotItem.player.id)
-					playerSnapshot = &playerSnapshotItem
-					break
-				}
+			err := HandleBinaryMessage(bytes, conn.RemoteAddr().String())
+			if err != nil {
+				conn.WriteMessage(websocket.TextMessage, []byte("Received message in invalid format"))
+				return
 			}
-			if playerSnapshot != nil {
-				log.Print("Found user. id: " + playerSnapshot.player.id)
-				playerSnapshot.position = parsedRequest.position
-				playerSnapshot.velocity = parsedRequest.velocity
 
-				for _, connection := range activeConnections {
-					connection.connection.WriteMessage(websocket.BinaryMessage, gameState.ToBinary())
-				}
-			} else {
-				log.Print("Could not find user with id: " + parsedRequest.uuid)
+			for _, connection := range activeConnections {
+				connection.connection.WriteMessage(websocket.BinaryMessage, gameState.ToBinary())
 			}
 
 		case websocket.TextMessage:
