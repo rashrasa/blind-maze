@@ -246,24 +246,41 @@ function playerToBinary(player: Player): Uint8Array {
         20 + avatarBuf.length + colorBuf.length + displayNameBuf.length + idBuf.length + usernameBuf.length
     )
 
+    let mergedView = new DataView(merged.buffer)
+
     counter = 0
+
+    mergedView.setUint32(counter, avatarBuf.length)
+    counter += 4
 
     merged.set(avatarBuf, counter)
     counter += avatarBuf.length
 
+    mergedView.setUint32(counter, colorBuf.length)
+    counter += 4
+
     merged.set(colorBuf, counter)
     counter += colorBuf.length
+
+    mergedView.setUint32(counter, displayNameBuf.length)
+    counter += 4
 
     merged.set(displayNameBuf, counter)
     counter += displayNameBuf.length
 
+    mergedView.setUint32(counter, idBuf.length)
+    counter += 4
+
     merged.set(idBuf, counter)
     counter += idBuf.length
+
+    mergedView.setUint32(counter, usernameBuf.length)
+    counter += 4
 
     merged.set(usernameBuf, counter)
     counter += usernameBuf.length
 
-    return data
+    return merged
 }
 
 // ENCODING:
