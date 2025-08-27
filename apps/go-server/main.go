@@ -64,7 +64,7 @@ type WebsocketHandler struct {
 // [
 // u32 width;
 // u32 height;
-// flattened byteArray of map
+// flattened bitArray of map
 // ]
 func (layout MapLayout) ToBinary() []byte {
 	buffer := []byte{}

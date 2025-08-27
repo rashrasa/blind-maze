@@ -167,7 +167,11 @@ importers:
 
   packages/rust-client: {}
 
-  packages/types: {}
+  packages/types:
+    devDependencies:
+      '@blind-maze/typescript-config':
+        specifier: 'workspace: *'
+        version: link:../typescript-config
 
   packages/typescript-config: {}
 

@@ -5,5 +5,8 @@
   "types": "./game_types.ts",
   "exports": {
     ".": "./game_types.ts"
+  },
+  "devDependencies": {
+    "@blind-maze/typescript-config": "workspace: *"
   }
 }
