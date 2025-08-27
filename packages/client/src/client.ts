@@ -95,19 +95,6 @@ export class GameClient {
         await connection.open();
 
         let initialState = false
-        let intitalPlayerState = {
-            player: this.thisPlayer,
-            isLeader: false,
-            position: {
-                x: 1.5,
-                y: 1.5
-            },
-            velocity: {
-                x: 0,
-                y: 0
-            },
-            snapshotTimestampMs: Date.now()
-        }
         if (connection.ws == null) {
             return false
         }
@@ -138,7 +125,6 @@ export class GameClient {
             this.webSocketConnection = connection.ws
         }
         let initialMessage: Uint8Array = composeNewConnectionMessage(this.thisPlayer)
-
 
         connection.ws.send(initialMessage)
 
