@@ -1,0 +1,7 @@
+{
+    "name": "@blind-maze/go-server",
+    "scripts": {
+        "dev": "go.sh --run",
+        "test": "go.sh --test"
+    }
+}

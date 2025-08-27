@@ -87,3 +87,5 @@ output.csv
 **/output/**
 
 exclude/*
+
+.go/
