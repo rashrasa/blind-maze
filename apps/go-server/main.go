@@ -224,10 +224,14 @@ func HandleBinaryMessage(p []byte, address string) error {
 	messageType := p[0]
 	switch messageType {
 	case ClientNewConnectionMessage:
+		log.Print("Received new player join request")
 		// ENCODING:
 		// bytes[0:1] = message type
-		// bytes[1:5] = Player object
+		// bytes[1:] = Player object
 		player := PlayerFromBinary(p[1:])
+
+		log.Print("Parsed player")
+		log.Print(player)
 		gameState.playerStates = append(gameState.playerStates, PlayerSnapshot{
 			player:              player,
 			position:            Vector2[float64]{0, 0},

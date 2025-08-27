@@ -246,8 +246,7 @@ function playerToBinary(player: Player): Uint8Array {
         20 + avatarBuf.length + colorBuf.length + displayNameBuf.length + idBuf.length + usernameBuf.length
     )
 
-    merged.set(data)
-    counter = 60
+    counter = 0
 
     merged.set(avatarBuf, counter)
     counter += avatarBuf.length
