@@ -3,6 +3,7 @@ package main
 import (
 	"encoding/binary"
 	"errors"
+	"fmt"
 	"log"
 	"math"
 	"net/http"
@@ -221,6 +222,8 @@ func (gameState GameState) ToBinary() []byte {
 }
 
 func HandleBinaryMessage(p []byte, address string) error {
+	log.Print("Attempting to parse binary message of length " + fmt.Sprint(len(p)))
+
 	messageType := p[0]
 	switch messageType {
 	case ClientNewConnectionMessage:

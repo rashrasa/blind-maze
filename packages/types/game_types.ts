@@ -321,7 +321,7 @@ function playerStateToBinary(state: PlayerSnapshot): Uint8Array {
     return merged
 }
 
-function composeMessageToServer(state: PlayerSnapshot): Uint8Array {
+function composeUpdateMessageToServer(state: PlayerSnapshot): Uint8Array {
     let data = playerStateToBinary(state)
     let merged = new Uint8Array(data.length + 1);
 
@@ -329,6 +329,15 @@ function composeMessageToServer(state: PlayerSnapshot): Uint8Array {
     merged.set(data, 1)
 
     return merged
+}
+
+function composeNewConnectionMessage(player: Player): Uint8Array {
+    let playerEncoded: Uint8Array = playerToBinary(player)
+    let merged = new Uint8Array(playerEncoded.length + 1)
+
+    merged[0] = 0
+    merged.set(playerEncoded, 1)
+    return merged;
 }
 
 
@@ -344,7 +353,8 @@ export type {
 export {
     TileType,
     gameStateFromBinary,
-    composeMessageToServer,
-    playerToBinary
+    composeUpdateMessageToServer,
+    playerToBinary,
+    composeNewConnectionMessage
 }
 

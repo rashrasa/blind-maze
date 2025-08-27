@@ -1,8 +1,9 @@
 import {
     TileType,
     gameStateFromBinary,
-    composeMessageToServer,
-    playerToBinary
+    composeUpdateMessageToServer,
+    playerToBinary,
+    composeNewConnectionMessage
 } from "@blind-maze/types";
 
 import type {
@@ -136,13 +137,10 @@ export class GameClient {
             this.host = serverLocation
             this.webSocketConnection = connection.ws
         }
-        let playerEncoded: Uint8Array = playerToBinary(this.thisPlayer)
-        let merged = new Uint8Array(playerEncoded.length + 1)
+        let initialMessage: Uint8Array = composeNewConnectionMessage(this.thisPlayer)
 
-        merged[0] = 0
-        merged.set(playerEncoded, 1)
 
-        connection.ws.send(merged)
+        connection.ws.send(initialMessage)
 
         requestAnimationFrame(this.renderUntilStopped.bind(this))
         return true;
@@ -241,7 +239,7 @@ export class GameClient {
     }
 
     private async sendUpdateToServer(server: WebSocket, updatedState: PlayerSnapshot): Promise<void> {
-        server?.send(composeMessageToServer(updatedState));
+        server?.send(composeUpdateMessageToServer(updatedState));
     }
 
     // Main function for updating the game
