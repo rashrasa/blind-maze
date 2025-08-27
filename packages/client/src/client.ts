@@ -142,6 +142,8 @@ export class GameClient {
         merged[0] = 0
         merged.set(playerEncoded, 1)
 
+        connection.ws.send(merged)
+
         requestAnimationFrame(this.renderUntilStopped.bind(this))
         return true;
     }
