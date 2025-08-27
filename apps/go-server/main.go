@@ -339,7 +339,7 @@ func (wsh WebsocketHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 				if r := recover(); r != nil {
 					switch r := r.(type) {
 					case runtime.Error:
-						log.Print("Could not handle request properly." + r.Error() + "\n")
+						log.Print("Could not handle request properly. " + r.Error() + "\n")
 					}
 				}
 			}()

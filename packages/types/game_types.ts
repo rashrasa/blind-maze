@@ -17,9 +17,9 @@ interface GameConfig {
 interface Player {
     id: string;
     username: string;
-    displayName: string | null;
-    avatarUrl: string | null;
-    color: string | null;
+    displayName: string;
+    avatarUrl: string;
+    color: string;
 }
 
 /**
@@ -102,7 +102,7 @@ interface MapConfiguration {
 
 function gameStateFromBinary(binary: Uint8Array): GameSnapshot {
     let bufferView = new DataView(binary.buffer)
-    let decoder = new TextDecoder()
+    let decoder = new TextDecoder("UTF-8")
 
     let numPlayers = bufferView.getUint32(0, false)
     let players: PlayerSnapshot[] = new Array(numPlayers)
@@ -222,23 +222,23 @@ function playerToBinary(player: Player): Uint8Array {
 
     let counter = 0
 
-    let avatarBuf = encoder.encode(player.avatarUrl ?? "")
+    let avatarBuf = encoder.encode(player.avatarUrl)
     view.setUint32(counter, avatarBuf.length)
     counter += 4
 
-    let colorBuf = encoder.encode(player.color ?? "")
+    let colorBuf = encoder.encode(player.color)
     view.setUint32(counter, colorBuf.length)
     counter += 4
 
-    let displayNameBuf = encoder.encode(player.displayName ?? "")
+    let displayNameBuf = encoder.encode(player.displayName)
     view.setUint32(counter, displayNameBuf.length)
     counter += 4
 
-    let idBuf = encoder.encode(player.id ?? "")
+    let idBuf = encoder.encode(player.id)
     view.setUint32(counter, idBuf.length)
     counter += 4
 
-    let usernameBuf = encoder.encode(player.username ?? "")
+    let usernameBuf = encoder.encode(player.username)
     view.setUint32(counter, usernameBuf.length)
     counter += 4
 
@@ -275,7 +275,6 @@ function playerToBinary(player: Player): Uint8Array {
 // u64 serverTimestamp;
 // ]
 function playerStateToBinary(state: PlayerSnapshot): Uint8Array {
-    let encoder = new TextEncoder()
     let playerBinary = playerToBinary(state.player)
 
     let merged = new Uint8Array(
@@ -331,3 +330,4 @@ export {
     composeMessageToServer,
     playerToBinary
 }
+

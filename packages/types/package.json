@@ -6,7 +6,15 @@
   "exports": {
     ".": "./game_types.ts"
   },
+  "scripts": {
+    "test": "jest"
+  },
   "devDependencies": {
-    "@blind-maze/typescript-config": "workspace: *"
+    "@babel/preset-env": "^7.28.3",
+    "@babel/preset-typescript": "^7.27.1",
+    "@blind-maze/typescript-config": "workspace: *",
+    "@jest/globals": "^30.1.1",
+    "jest": "^30.0.5",
+    "ts-jest": "^29.4.1"
   }
 }
