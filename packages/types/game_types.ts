@@ -213,50 +213,41 @@ function gameStateFromBinary(binary: Uint8Array): GameSnapshot {
 // u32 usernameLength; 		string utf8 username;
 // ]
 
-// ENCODING:
-// [
-// bool isLeader 1 byte;
-// Player player;
-// f64 position x; 	f64 position y;
-// f64 velocity x; 	f64 velocity y;
-// u64 serverTimestamp;
-// ]
-function playerStateToBinary(state: PlayerSnapshot): Uint8Array {
-    // 1 + 5 * 4 + 8 * 5 = number of bytes for all data except strings
-    let buffer = new ArrayBuffer(61);
+function playerToBinary(player: Player): Uint8Array {
+    // 5 * 4 = number of bytes for all data except strings
+    let buffer = new ArrayBuffer(20);
     let data = new Uint8Array(buffer);
     let view = new DataView(data.buffer)
     let encoder = new TextEncoder()
 
-    data[0] = Number(state.isLeader)
-    let counter = 1
+    let counter = 0
 
-    let avatarBuf = encoder.encode(state.player.avatarUrl ?? "")
-    view.setUint32(1, avatarBuf.length)
+    let avatarBuf = encoder.encode(player.avatarUrl ?? "")
+    view.setUint32(counter, avatarBuf.length)
     counter += 4
 
-    let colorBuf = encoder.encode(state.player.color ?? "")
-    view.setUint32(5, colorBuf.length)
+    let colorBuf = encoder.encode(player.color ?? "")
+    view.setUint32(counter, colorBuf.length)
     counter += 4
 
-    let displayNameBuf = encoder.encode(state.player.displayName ?? "")
-    view.setUint32(9, displayNameBuf.length)
+    let displayNameBuf = encoder.encode(player.displayName ?? "")
+    view.setUint32(counter, displayNameBuf.length)
     counter += 4
 
-    let idBuf = encoder.encode(state.player.id ?? "")
-    view.setUint32(13, idBuf.length)
+    let idBuf = encoder.encode(player.id ?? "")
+    view.setUint32(counter, idBuf.length)
     counter += 4
 
-    let usernameBuf = encoder.encode(state.player.username ?? "")
-    view.setUint32(17, usernameBuf.length)
+    let usernameBuf = encoder.encode(player.username ?? "")
+    view.setUint32(counter, usernameBuf.length)
+    counter += 4
 
     let merged = new Uint8Array(
-        61 + avatarBuf.length + colorBuf.length + displayNameBuf.length + idBuf.length + usernameBuf.length
+        20 + avatarBuf.length + colorBuf.length + displayNameBuf.length + idBuf.length + usernameBuf.length
     )
 
-
     merged.set(data)
-    counter = 61
+    counter = 60
 
     merged.set(avatarBuf, counter)
     counter += avatarBuf.length
@@ -271,11 +262,59 @@ function playerStateToBinary(state: PlayerSnapshot): Uint8Array {
     counter += idBuf.length
 
     merged.set(usernameBuf, counter)
+    counter += usernameBuf.length
 
+    return data
+}
+
+// ENCODING:
+// [
+// bool isLeader 1 byte;
+// Player player;
+// f64 position x; 	f64 position y;
+// f64 velocity x; 	f64 velocity y;
+// u64 serverTimestamp;
+// ]
+function playerStateToBinary(state: PlayerSnapshot): Uint8Array {
+    let encoder = new TextEncoder()
+    let playerBinary = playerToBinary(state.player)
+
+    let merged = new Uint8Array(
+        1 + playerBinary.length + 40
+    )
+    merged[0] = Number(state.isLeader)
+    merged.set(playerBinary, 1)
+    let counter = 1 + playerBinary.length
+
+    let view = new DataView(merged.buffer)
+
+    view.setFloat64(counter, state.position.x)
+    counter += 8
+
+    view.setFloat64(counter, state.position.y)
+    counter += 8
+
+    view.setFloat64(counter, state.velocity.x)
+    counter += 8
+
+    view.setFloat64(counter, state.velocity.y)
+    counter += 8
+
+    view.setBigUint64(counter, BigInt(state.snapshotTimestampMs))
+    counter += 8
 
     return merged
 }
 
+function composeMessageToServer(state: PlayerSnapshot): Uint8Array {
+    let data = playerStateToBinary(state)
+    let merged = new Uint8Array(data.length + 1);
+
+    merged[0] = 1
+    merged.set(data, 1)
+
+    return merged
+}
 
 
 export type {
@@ -290,5 +329,6 @@ export type {
 export {
     TileType,
     gameStateFromBinary,
-    playerStateToBinary,
+    composeMessageToServer,
+    playerToBinary
 }

@@ -293,6 +293,11 @@ type Connection struct {
 	uuid       string
 }
 
+func CheckOrigin(request *http.Request) bool {
+	//TODO: actually check origin properly
+	return true
+}
+
 func (wsh WebsocketHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	conn, err := wsh.upgrader.Upgrade(w, r, nil)
 	if err != nil {
@@ -359,7 +364,9 @@ func main() {
 	})
 
 	webSocketHandler := WebsocketHandler{
-		upgrader: websocket.Upgrader{},
+		upgrader: websocket.Upgrader{
+			CheckOrigin: CheckOrigin,
+		},
 	}
 
 	http.Handle("/", webSocketHandler)
