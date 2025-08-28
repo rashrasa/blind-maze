@@ -1,7 +1,10 @@
 {
     "name": "@blind-maze/go-server",
     "scripts": {
-        "dev": "go.sh --run",
-        "test": "go.sh --test"
+        "dev": "$env:GOCACHE = $PWD.Path + '\\.go'; go run .",
+        "test": "$env:GOCACHE = $PWD.Path + '\\.go'; go test"
+    },
+    "devDependencies": {
+        "cross-env": "^10.0.0"
     }
 }
