@@ -99,8 +99,21 @@ export class GameClient {
             return false
         }
         else {
-            connection.ws.addEventListener("message", (ev) => {
-                let data = gameStateFromBinary(ev.data)
+            connection.ws.addEventListener("message", async (ev) => {
+                let buffer: ArrayBuffer;
+
+                if (connection.ws?.binaryType == "arraybuffer") {
+                    buffer = ev.data
+                }
+                else if (connection.ws?.binaryType == "blob") {
+                    buffer = await (ev.data as Blob).arrayBuffer()
+                }
+                else {
+                    console.error("Could not load message into an ArrayBuffer")
+                }
+
+
+                let data = gameStateFromBinary(buffer!)
 
                 if (!initialState) {
                     initialState = true;
@@ -116,6 +129,8 @@ export class GameClient {
                 else {
                     console.warn("Received game state without current player.")
                 }
+
+
             })
             connection.ws.addEventListener("close", () => {
                 this.host = null

@@ -100,8 +100,8 @@ interface MapConfiguration {
 // MapLayout(u32 width; u32 height; flattened bitArray of map);
 // ]
 
-function gameStateFromBinary(binary: Uint8Array): GameSnapshot {
-    let bufferView = new DataView(binary.buffer)
+function gameStateFromBinary(buffer: ArrayBufferLike): GameSnapshot {
+    let bufferView = new DataView(buffer)
     let decoder = new TextDecoder("UTF-8")
 
     let numPlayers = bufferView.getUint32(0, false)
@@ -115,27 +115,27 @@ function gameStateFromBinary(binary: Uint8Array): GameSnapshot {
 
         let avatarLength = bufferView.getUint32(counter)
         counter += 4
-        let avatar = decoder.decode(binary.subarray(counter, counter + avatarLength))
+        let avatar = decoder.decode(buffer.slice(counter, counter + avatarLength))
         counter += avatarLength
 
         let colorLength = bufferView.getUint32(counter)
         counter += 4
-        let color = decoder.decode(binary.subarray(counter, counter + colorLength))
+        let color = decoder.decode(buffer.slice(counter, counter + colorLength))
         counter += colorLength
 
         let displayNameLength = bufferView.getUint32(counter)
         counter += 4
-        let displayName = decoder.decode(binary.subarray(counter, counter + displayNameLength))
+        let displayName = decoder.decode(buffer.slice(counter, counter + displayNameLength))
         counter += displayNameLength
 
         let idLength = bufferView.getUint32(counter)
         counter += 4
-        let id = decoder.decode(binary.subarray(counter, counter + idLength))
+        let id = decoder.decode(buffer.slice(counter, counter + idLength))
         counter += idLength
 
         let usernameLength = bufferView.getUint32(counter)
         counter += 4
-        let username = decoder.decode(binary.subarray(counter, counter + usernameLength))
+        let username = decoder.decode(buffer.slice(counter, counter + usernameLength))
         counter += usernameLength
 
         let positionX = bufferView.getFloat64(counter)
@@ -182,7 +182,7 @@ function gameStateFromBinary(binary: Uint8Array): GameSnapshot {
     let i = 0;
     let row: TileType[] = []
     for (let k = 0; k < mapBytesLength; k++) {
-        let byte = binary[1]!
+        let byte = bufferView.getUint8(1)!
         for (let bitIndex = 7; bitIndex >= 0; i--) {
             let tile = ((byte >> bitIndex) == 1) ? TileType.WALL : TileType.EMPTY
             row.push(tile)
