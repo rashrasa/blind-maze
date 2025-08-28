@@ -249,11 +249,16 @@ func HandleBinaryMessage(p []byte, address string) error {
 			isLeader:            false,
 			snapshotTimestampMs: uint64(time.Now().UnixMilli()),
 		})
+		c := 0
 		for _, connection := range activeConnections {
 			if connection.address == address {
 				connection.uuid = player.id
 			}
+			connection.connection.WriteMessage(websocket.BinaryMessage, gameState.ToBinary())
+			c++
 		}
+
+		log.Print("Sent back game state to " + fmt.Sprint(c) + " connections. Active connections: " + fmt.Sprint(len(activeConnections)))
 	case ClientUpdateRequestMessage:
 		// ENCODING:
 		// bytes[0:1] = message type
@@ -336,6 +341,8 @@ func (wsh WebsocketHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	connection := new(Connection)
 	connection.address = conn.RemoteAddr().String()
 	connection.connection = conn
+
+	activeConnections = append(activeConnections, connection)
 
 	for {
 		messageType, bytes, err := conn.ReadMessage()
