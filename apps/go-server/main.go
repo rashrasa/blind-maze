@@ -132,26 +132,33 @@ func (player Player) ToBinary() []byte {
 // u32 usernameLength; 		string utf8 username;
 // ]
 func PlayerFromBinary(p []byte) Player {
+	log.Print("Attempting to parse player from byte array of length " + fmt.Sprint(len(p)))
 	var counter uint32 = 0
 
 	avatarLength := binary.BigEndian.Uint32(p[counter : counter+4])
+	counter += 4
 	avatar := string(p[counter : counter+avatarLength])
 	counter += avatarLength
 
 	colorLength := binary.BigEndian.Uint32(p[counter : counter+4])
+	counter += 4
 	color := string(p[counter : counter+colorLength])
 	counter += colorLength
 
 	displayNameLength := binary.BigEndian.Uint32(p[counter : counter+4])
+	counter += 4
 	displayName := string(p[counter : counter+displayNameLength])
 	counter += displayNameLength
 
 	idLength := binary.BigEndian.Uint32(p[counter : counter+4])
+	counter += 4
 	id := string(p[counter : counter+idLength])
 	counter += idLength
 
 	usernameLength := binary.BigEndian.Uint32(p[counter : counter+4])
+	counter += 4
 	username := string(p[counter : counter+usernameLength])
+	counter += usernameLength
 
 	return Player{
 		avatarUrl:   avatar,
@@ -349,8 +356,10 @@ func (wsh WebsocketHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 			err := HandleBinaryMessage(bytes, conn.RemoteAddr().String())
 			if err != nil {
 				conn.WriteMessage(websocket.TextMessage, []byte("Received message in invalid format"))
+				log.Print("Received message in invalid format")
 				return
 			}
+			log.Print("Done processing message")
 
 			for _, connection := range activeConnections {
 				connection.connection.WriteMessage(websocket.BinaryMessage, gameState.ToBinary())
@@ -377,7 +386,7 @@ func main() {
 	}
 
 	http.Handle("/", webSocketHandler)
-	log.Println("Starting server...")
+	log.Println("Started server")
 
 	log.Fatal(http.ListenAndServe("localhost:3001", nil))
 }
