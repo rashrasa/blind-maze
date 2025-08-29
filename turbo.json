@@ -19,7 +19,6 @@
       "dependsOn": ["^check-types"]
     },
     "dev": {
-      "dependsOn": ["^compile"],
       "cache": false,
       "persistent": true
     },
