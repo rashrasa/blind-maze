@@ -132,7 +132,6 @@ func (player Player) ToBinary() []byte {
 // u32 usernameLength; 		string utf8 username;
 // ]
 func PlayerFromBinary(p []byte) Player {
-	log.Print("Attempting to parse player from byte array of length " + fmt.Sprint(len(p)))
 	var counter uint32 = 0
 
 	avatarLength := binary.BigEndian.Uint32(p[counter : counter+4])
@@ -229,7 +228,7 @@ func (gameState GameState) ToBinary() []byte {
 }
 
 func HandleBinaryMessage(p []byte, address string) error {
-	log.Print("Attempting to parse binary message of length " + fmt.Sprint(len(p)))
+	log.Print("Received message. Message size: " + fmt.Sprint(len(p)) + " bytes")
 
 	messageType := p[0]
 	switch messageType {
