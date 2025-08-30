@@ -4,9 +4,9 @@ Full stack web game TurboRepo project.
 
 ## Main Components
 
-**Game Server (In-Progress)**: Written in Go, can be found at `apps/go-server/`
+**Game Server (In-Progress)**: Written in Go, can be found at `apps/go-server`
 
-**Game Client (In-Progress)**: Written in Typescript, uses DOM library, found at `packages/client/`
+**Game Client (In-Progress)**: Written in Typescript, uses DOM library, found at `packages/client`
 
 **Frontend (In-Progress)**: Next.js app that handles authentication, main UI, and can be found at `apps/frontend`
 
@@ -24,7 +24,7 @@ Full stack web game TurboRepo project.
 
 2. Install Turbo using `pnpm i turbo`.
 
-3. Create a `.env.local` file in `apps/frontend/` root, add secrets
+3. Create a `.env.local` file in `apps/frontend` root, add secrets
    `NEXT_PUBLIC_SUPABASE_URL` and `NEXT_PUBLIC_SUPABASE_ANON_KEY`
 
 4. Manually create a user in Supabase Authentication with the Email and Password sign up method
@@ -35,4 +35,4 @@ Clone repo, install dependencies by running `pnpm install` in the project root.
 
 **Frontend**: Run `turbo dev` to spin up frontend.
 
-**Server**: Run `go run .` in `apps/go-server/`
+**Server**: Run `go run .` in `apps/go-server`
