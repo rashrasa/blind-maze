@@ -104,14 +104,16 @@ function gameStateFromBinary(buffer: ArrayBufferLike): GameSnapshot {
     let bufferView = new DataView(buffer)
     let decoder = new TextDecoder("UTF-8")
 
-    let numPlayers = bufferView.getUint32(0, false)
-    let players: PlayerSnapshot[] = new Array(numPlayers)
+    let counter = 0
 
-    let counter = 4
+    let numPlayers = bufferView.getUint32(counter)
+    counter += 4
+
+    let players: PlayerSnapshot[] = []
 
     for (let i = 0; i < numPlayers; i++) {
-        let isLeader: boolean = !!bufferView.getUint8(counter)
-        counter++
+        let isLeader: boolean = Boolean(bufferView.getUint8(counter))
+        counter += 1
 
         let avatarLength = bufferView.getUint32(counter)
         counter += 4
@@ -175,22 +177,28 @@ function gameStateFromBinary(buffer: ArrayBufferLike): GameSnapshot {
     counter += 4
     let mapHeight = bufferView.getUint32(counter)
     counter += 4
-
     let tiles: TileType[][] = []
     let mapBytesLength: number = Math.ceil((1.0 * mapWidth * mapHeight) / 8.0)
 
-    let i = 0;
+    let i = 0
     let row: TileType[] = []
     for (let k = 0; k < mapBytesLength; k++) {
-        let byte = bufferView.getUint8(1)!
-        for (let bitIndex = 7; bitIndex >= 0; i--) {
+        let byte = bufferView.getUint8(k)!
+        for (let bitIndex = 7; bitIndex >= 0; bitIndex--) {
             let tile = ((byte >> bitIndex) == 1) ? TileType.WALL : TileType.EMPTY
             row.push(tile)
+            i++
+            if (i > mapHeight * mapWidth) {
+                break;
+            }
             if (i == mapWidth - 1) {
                 i = 0;
                 tiles.push(row)
                 row = []
             }
+        }
+        if (i > mapHeight * mapWidth) {
+            break;
         }
     }
 
