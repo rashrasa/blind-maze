@@ -114,8 +114,6 @@ func (player Player) ToBinary() []byte {
 	buffer = binary.BigEndian.AppendUint32(buffer, usernameBytesLength)
 	buffer = append(buffer, usernameBytes...)
 
-	log.Print(string(buffer))
-
 	return buffer
 }
 
@@ -322,6 +320,7 @@ func HandleBinaryMessage(p []byte, address string) error {
 			message := gameState.ToBinary()
 			connection.connection.WriteMessage(websocket.BinaryMessage, message)
 			log.Print("Sent message to client. Size: " + fmt.Sprint(len(message)) + " bytes.")
+			log.Print(message)
 		}
 
 	default:
