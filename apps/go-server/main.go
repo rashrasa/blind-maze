@@ -217,6 +217,8 @@ func (playerSnapshot PlayerSnapshot) ToBinary() []byte {
 func (gameState GameState) ToBinary() []byte {
 
 	buffer := []byte{}
+	var numPlayers uint32 = uint32(len(gameState.playerStates))
+	buffer = binary.BigEndian.AppendUint32(buffer, numPlayers)
 
 	for _, player := range gameState.playerStates {
 		buffer = append(buffer, player.ToBinary()...)
