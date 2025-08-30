@@ -102,16 +102,22 @@ export class GameClient {
             connection.ws.addEventListener("message", async (ev) => {
                 let buffer: ArrayBuffer;
 
-                if (connection.ws?.binaryType == "arraybuffer") {
-                    buffer = ev.data
+                if (typeof ev.data == "string") {
+                    console.log("Received string message: " + ev.data)
+                    return
                 }
-                else if (connection.ws?.binaryType == "blob") {
-                    buffer = await (ev.data as Blob).arrayBuffer()
+                switch (connection.ws!.binaryType) {
+                    case "arraybuffer":
+                        buffer = ev.data
+                        break;
+                    case "blob":
+                        if (ev.data == undefined) {
+                            console.error("Invalid message data. Message.event is undefined")
+                            return
+                        }
+                        buffer = await ev.data!.arrayBuffer()
+                        break;
                 }
-                else {
-                    console.error("Could not load message into an ArrayBuffer")
-                }
-
 
                 let data = gameStateFromBinary(buffer!)
 
