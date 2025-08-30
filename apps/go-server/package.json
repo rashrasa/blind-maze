@@ -1,3 +1,4 @@
 {
-    "name": "@blind-maze/go-server"
+    "name": "@blind-maze/go-server",
+    "version": "0.1.0"
 }

@@ -1,6 +1,6 @@
 {
   "name": "@blind-maze/client",
-  "version": "0.0.1",
+  "version": "0.1.0",
   "private": true,
   "main": "dist/client.js",
   "types": "dist/client.d.ts",
@@ -14,11 +14,11 @@
     "lint": "eslint ."
   },
   "dependencies": {
-    "websocket-as-promised": "^3.0.1"
+    "websocket-as-promised": "^3.0.1",
+    "@blind-maze/types": "workspace:^"
   },
   "devDependencies": {
     "@blind-maze/eslint-config": "workspace:^",
-    "@blind-maze/types": "workspace:^",
     "@blind-maze/typescript-config": "workspace:^"
   }
 }
