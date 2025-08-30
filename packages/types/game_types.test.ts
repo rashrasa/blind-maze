@@ -135,7 +135,7 @@ describe('playerToBinary', () => {
         expect(result.length).toBe(26)
     })
 
-    test("composeMessageToServer formulates binary message in correct format", () => {
+    test("composeUpdateMessageToServer formulates binary message in correct format", () => {
         let message: Uint8Array = composeUpdateMessageToServer({
             isLeader: false,
             player: {
@@ -156,7 +156,81 @@ describe('playerToBinary', () => {
             snapshotTimestampMs: 1_000_000
         })
 
+        let messageView = new DataView(message.buffer);
+
         expect(message[0]).toBe(1)
+
+        expect(message[1]).toBe(0)
+
+        let counter = 2;
+
+        let avatarLength = messageView.getUint32(counter);
+        expect(avatarLength).toBe(1)
+        counter += 4
+
+        let avatar = decoder.decode(message.subarray(counter, counter + 1))
+        expect(avatar).toBe("\0")
+        counter += 1
+
+        let colorLength = messageView.getUint32(counter);
+        expect(colorLength).toBe(1)
+        counter += 4
+
+        let color = decoder.decode(message.subarray(counter, counter + 1))
+        expect(color).toBe("\0")
+        counter += 1
+
+        let displayNameLength = messageView.getUint32(counter);
+        expect(displayNameLength).toBe(1)
+        counter += 4
+
+        let displayName = decoder.decode(message.subarray(counter, counter + 1))
+        expect(displayName).toBe("\0")
+        counter += 1
+
+        let idLength = messageView.getUint32(counter);
+        expect(idLength).toBe(1)
+        counter += 4
+
+        let id = decoder.decode(message.subarray(counter, counter + 1))
+        expect(id).toBe("\0")
+        counter += 1
+
+        let usernameLength = messageView.getUint32(counter);
+        expect(usernameLength).toBe(1)
+        counter += 4
+
+        let username = decoder.decode(message.subarray(counter, counter + 1))
+        expect(username).toBe("\0")
+        counter += 1
+
+        let posX = messageView.getFloat64(counter);
+        expect(posX).toBeCloseTo(0, 1)
+        counter += 8
+
+        let posY = messageView.getFloat64(counter);
+        expect(posY).toBeCloseTo(0, 1)
+        counter += 8
+
+        let velX = messageView.getFloat64(counter);
+        expect(velX).toBeCloseTo(0, 1)
+        counter += 8
+
+        let velY = messageView.getFloat64(counter);
+        expect(velY).toBeCloseTo(0, 1)
+        counter += 8
+
+        let timestamp = messageView.getBigUint64(counter);
+        expect(Number(timestamp)).toBe(1_000_000)
+        counter += 8
+
+        expect(counter).toBe(67)
+
+    })
+    test("gameStateFromBinary parses correct barebones message correctly", () => {
+        let buffer: ArrayBuffer = new ArrayBuffer();
+
+        expect(true).toBe(false)
     })
 })
 
