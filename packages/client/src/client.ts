@@ -125,18 +125,19 @@ export class GameClient {
                     initialState = true;
                     console.log(`Received state:` + JSON.stringify(data))
                 }
-                this.lastGameSnapshot = data
-                const thisPlayerSnapshot: PlayerSnapshot | undefined = this.lastGameSnapshot.playerStates.find((playerState) =>
+
+                const thisPlayerSnapshot: PlayerSnapshot | undefined = data.playerStates.find((playerState) =>
                     playerState.player.id === this.thisPlayer.id
                 )
                 if (thisPlayerSnapshot != undefined) {
                     this.lastThisPlayerSnapshot = thisPlayerSnapshot;
                 }
                 else {
+                    this.lastThisPlayerSnapshot = null
                     console.warn("Received game state without current player.")
                 }
 
-
+                this.lastGameSnapshot = data
             })
             connection.ws.addEventListener("close", () => {
                 this.host = null
@@ -246,7 +247,7 @@ export class GameClient {
     }
 
     private async sendUpdateToServer(server: WebSocket, updatedState: PlayerSnapshot): Promise<void> {
-        server?.send(composeUpdateMessageToServer(updatedState));
+        server.send(composeUpdateMessageToServer(updatedState));
     }
 
     // Main function for updating the game
@@ -294,7 +295,7 @@ export class GameClient {
         if (!this.isVisible) return;
         const inputKey = event.code
         if (this.lastThisPlayerSnapshot == null) {
-            console.warn("Unexpected Error: thisPlayer state is null")
+            console.warn("Warning: thisPlayer state is null")
             return
         }
         switch (inputKey) {
@@ -324,7 +325,7 @@ export class GameClient {
         if (!this.isVisible) return;
         const inputKey = event.code
         if (this.lastThisPlayerSnapshot == null) {
-            console.warn("Unexpected Error: thisPlayer state is null")
+            console.warn("Warning: thisPlayer state is null")
             return
         }
         switch (inputKey) {
@@ -353,7 +354,7 @@ export class GameClient {
     private handleInputState() {
         if (!this.isVisible) return;
         if (this.lastThisPlayerSnapshot == null) {
-            console.warn("Unexpected Error: thisPlayer state is null")
+            console.warn("Warning: thisPlayer state is null")
             return
         }
         let velocity = {
