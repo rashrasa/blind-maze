@@ -17,7 +17,9 @@ import {
     composeNewConnectionMessage
 } from "./game_types"
 
-describe('playerToBinary', () => {
+
+// Counters are used for readability
+describe('game_types methods', () => {
     let decoder = new TextDecoder("UTF-8")
     test("playerToBinary outputs correct result with all string fields", () => {
         let player: Player = {
@@ -225,12 +227,124 @@ describe('playerToBinary', () => {
         counter += 8
 
         expect(counter).toBe(67)
-
     })
     test("gameStateFromBinary parses correct barebones message correctly", () => {
-        let buffer: ArrayBuffer = new ArrayBuffer();
+        let buffer: ArrayBuffer = new ArrayBuffer(4 + 66 + 4 + 4 + 2);
+        let bufferView = new DataView(buffer);
 
-        expect(true).toBe(false)
+        let counter = 0;
+
+        //numPlayers
+        bufferView.setUint32(counter, 1)
+        counter += 4
+
+        //isLeader
+        bufferView.setUint8(counter, 0)
+        counter += 1
+
+        //avatar
+        bufferView.setUint32(counter, 1)
+        counter += 4
+        bufferView.setUint8(counter, 0);
+        counter += 1
+
+        //color
+        bufferView.setUint32(counter, 1)
+        counter += 4
+        bufferView.setUint8(counter, 0);
+        counter += 1
+
+        // displayName
+        bufferView.setUint32(counter, 1)
+        counter += 4
+        bufferView.setUint8(counter, 0);
+        counter += 1
+
+        //id
+        bufferView.setUint32(counter, 1)
+        counter += 4
+        bufferView.setUint8(counter, 0);
+        counter += 1
+
+        //username
+        bufferView.setUint32(counter, 1)
+        counter += 4
+        bufferView.setUint8(counter, 0);
+        counter += 1
+
+        //pos
+        bufferView.setFloat64(counter, 0)
+        counter += 8
+        bufferView.setFloat64(counter, 0)
+        counter += 8
+
+        //vel
+        bufferView.setFloat64(counter, 0)
+        counter += 8
+        bufferView.setFloat64(counter, 0)
+        counter += 8
+
+        //timestamp
+        bufferView.setBigUint64(counter, BigInt(0))
+        counter += 8
+
+        //width
+        bufferView.setUint32(counter, 3)
+        counter += 4
+
+        //height
+        bufferView.setUint32(counter, 3)
+        counter += 4
+
+        bufferView.setUint8(counter, 0b11110111)
+        counter += 1
+
+        bufferView.setUint8(counter, 0b10000000)
+        counter += 1
+
+        expect(counter).toBe(buffer.byteLength)
+
+        let gameState: GameSnapshot = gameStateFromBinary(buffer)
+        expect(gameState.playerStates.length).toBe(1)
+
+        let playerState: PlayerSnapshot = gameState.playerStates[0]!
+
+        expect(playerState.isLeader).toBe(false)
+
+        expect(playerState.player.avatarUrl).toBe("\0")
+        expect(playerState.player.color).toBe("\0")
+        expect(playerState.player.displayName).toBe("\0")
+        expect(playerState.player.id).toBe("\0")
+        expect(playerState.player.username).toBe("\0")
+
+        expect(playerState.position.x).toBeCloseTo(0, 1)
+        expect(playerState.position.y).toBeCloseTo(0, 1)
+        expect(playerState.velocity.x).toBeCloseTo(0, 1)
+        expect(playerState.velocity.y).toBeCloseTo(0, 1)
+
+        expect(playerState.snapshotTimestampMs).toBe(0)
+
+        let map = gameState.map
+        expect(map.width).toBe(3)
+        expect(map.height).toBe(3)
+
+        let row = map.tiles[0]!
+        expect(row!.length).toBe(3)
+        expect(row[0]).toBe(TileType.WALL)
+        expect(row[1]).toBe(TileType.WALL)
+        expect(row[2]).toBe(TileType.WALL)
+
+        row = map.tiles[1]!
+        expect(row!.length).toBe(3)
+        expect(row[0]).toBe(TileType.WALL)
+        expect(row[1]).toBe(TileType.EMPTY)
+        expect(row[2]).toBe(TileType.WALL)
+
+        row = map.tiles[2]!
+        expect(row!.length).toBe(3)
+        expect(row[0]).toBe(TileType.WALL)
+        expect(row[1]).toBe(TileType.WALL)
+        expect(row[2]).toBe(TileType.WALL)
     })
 })
 
