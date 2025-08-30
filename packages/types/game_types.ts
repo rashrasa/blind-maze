@@ -186,13 +186,12 @@ function gameStateFromBinary(buffer: ArrayBufferLike): GameSnapshot {
     for (let k = 0; k < mapBytesLength; k++) {
         let byte = bufferView.getUint8(counter)
         counter += 1
-        console.log(byte)
-        for (let bitIndex = 0; bitIndex < 8; bitIndex++) {
+        for (let bitIndex = 7; bitIndex >= 0; bitIndex--) {
             let digit = byte >> bitIndex & 0b0000_0001
 
             row.push(digit)
             i++
-            if (i == mapWidth) {
+            if ((i % mapWidth) == 0 && i != 0) {
                 tiles.push(row)
                 row = []
             }

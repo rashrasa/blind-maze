@@ -328,6 +328,8 @@ describe('game_types methods', () => {
         expect(map.width).toBe(3)
         expect(map.height).toBe(3)
 
+        expect(map.tiles.length).toBe(3)
+
         let row = map.tiles[0]!
         expect(row!.length).toBe(3)
         expect(row[0]).toBe(TileType.WALL)
