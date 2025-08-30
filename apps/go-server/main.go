@@ -390,9 +390,9 @@ var gameState = new(GameState)
 var activeConnections []*Connection
 
 func main() {
-	gameState.mapLayout.width = 3
-	gameState.mapLayout.height = 3
-	gameState.mapLayout.tiles = append(gameState.mapLayout.tiles, 0b111_101_11, 0b1_000_0000)
+	gameState.mapLayout.width = 9
+	gameState.mapLayout.height = 4
+	gameState.mapLayout.tiles = append(gameState.mapLayout.tiles, 0b1111_1111, 0b1_100_0000, 0b0110_0000, 0b0011_1111, 0b1111_0000)
 
 	webSocketHandler := WebsocketHandler{
 		upgrader: websocket.Upgrader{
