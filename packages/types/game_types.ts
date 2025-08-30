@@ -1,16 +1,3 @@
-
-/**
- * Contains game initialization data
- */
-interface GameConfig {
-    gameId: string;
-    maxPlayers: number;
-    tickRate: number; // in milliseconds
-    gameDuration: number; // in seconds
-    mapConfiguration: MapConfiguration;
-    initialPlayerState: PlayerSnapshot[];
-}
-
 /**
  * Unique and persistent player identifier
  */
@@ -354,7 +341,6 @@ function composeNewConnectionMessage(player: Player): Uint8Array {
 
 
 export type {
-    GameConfig,
     Player,
     PlayerSnapshot,
     GameSnapshot,
