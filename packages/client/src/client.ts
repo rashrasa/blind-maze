@@ -250,18 +250,26 @@ export class GameClient {
         server.send(composeUpdateMessageToServer(updatedState));
     }
 
-    // Main function for updating the game
+    // Main function for updating the game state
     private tick(milliseconds: number) {
         if (this.lastThisPlayerSnapshot == null) {
             console.warn("Tried ticking without a player snaphot. Ignoring.")
             return;
         }
 
-        let mapWidth = this.lastGameSnapshot!.map.width;
-        let mapHeight = this.lastGameSnapshot!.map.height;
+        if (this.lastGameSnapshot == null) {
+            console.warn("Tried ticking before receiving an initial game snapshot. Ignoring.")
+            return;
+        }
 
-        let currentX = this.lastThisPlayerSnapshot!.position.x
-        let currentY = this.lastThisPlayerSnapshot!.position.y
+        let centerX = this.lastThisPlayerSnapshot!.position.x
+        let centerY = this.lastThisPlayerSnapshot!.position.y
+
+        let playerLeftX = centerX - PLAYER_SQUARE_LENGTH_TILES / 2.0
+        let playerRightX = centerX + PLAYER_SQUARE_LENGTH_TILES / 2.0
+
+        let playerTopY = centerY - PLAYER_SQUARE_LENGTH_TILES / 2.0
+        let playerBottomY = centerY + PLAYER_SQUARE_LENGTH_TILES / 2.0
 
         let currentVX = this.lastThisPlayerSnapshot!.velocity.x
         let currentVY = this.lastThisPlayerSnapshot!.velocity.y
@@ -269,13 +277,53 @@ export class GameClient {
         let newVX = this.lastThisPlayerSnapshot!.velocity.x
         let newVY = this.lastThisPlayerSnapshot!.velocity.y
 
-        // Only calculating player -> tile collisions for now
-        if (currentX - PLAYER_SQUARE_LENGTH_TILES / 2.0 <= 1 && currentVX < 0) newVX = 0
-        else if (currentX + PLAYER_SQUARE_LENGTH_TILES / 2.0 >= mapWidth - 1 && currentVX > 0) newVX = 0
+        let tiles = this.lastGameSnapshot!.map.tiles;
 
-        if (currentY - PLAYER_SQUARE_LENGTH_TILES / 2.0 <= 1 && currentVY < 0) newVY = 0
-        else if (currentY + PLAYER_SQUARE_LENGTH_TILES / 2.0 >= mapHeight - 1 && currentVY > 0) newVY = 0
 
+        // Only check nearby tiles
+        let startRowInclusive = Math.max(0, Math.floor(playerTopY - 1))
+        let endRowInclusive = Math.min(tiles.length - 1, Math.ceil(playerBottomY + 1))
+
+        let startColumnInclusive = Math.max(0, Math.floor(playerLeftX - 1))
+        let endColumnInclusive = Math.min(tiles[0]!.length - 1, Math.ceil(playerRightX + 1))
+
+        for (let j = startRowInclusive; j <= endRowInclusive; j++) {
+            let row = tiles[j]!
+
+
+            for (let i = startColumnInclusive; i <= endColumnInclusive; i++) {
+                if (row[i]! == TileType.EMPTY) {
+                    continue;
+                }
+
+                // Heading right
+                if (currentVX > 0) {
+                    if ((playerRightX > i && playerRightX < i + 1) && (centerY > j && centerY < j + 1)) {
+                        newVX = 0;
+                    }
+                }
+                // Heading left 
+                else if (currentVX < 0) {
+                    if ((playerLeftX < i + 1 && playerLeftX > i) && (centerY > j && centerY < j + 1)) {
+                        newVX = 0;
+                    }
+                }
+
+                // Heading down
+                if (currentVY > 0) {
+                    if ((playerBottomY > j && playerBottomY < j + 1) && (centerX > i && centerX < i + 1)) {
+                        newVY = 0;
+                    }
+                }
+                // Heading up 
+                else if (currentVY < 0) {
+                    if ((playerTopY < j + 1 && playerTopY > j) && (centerX > i && centerX < i + 1)) {
+                        newVY = 0;
+                    }
+                }
+
+            }
+        }
 
         let updatedState: PlayerSnapshot = {
             isLeader: this.lastThisPlayerSnapshot!.isLeader,
@@ -284,7 +332,10 @@ export class GameClient {
                 x: this.lastThisPlayerSnapshot!.position.x + newVX * milliseconds / 1000.0,
                 y: this.lastThisPlayerSnapshot!.position.y + newVY * milliseconds / 1000.0
             },
-            velocity: this.lastThisPlayerSnapshot!.velocity,
+            velocity: {
+                x: newVX,
+                y: newVY
+            },
             snapshotTimestampMs: Date.now()
         }
         this.lastThisPlayerSnapshot = updatedState;
