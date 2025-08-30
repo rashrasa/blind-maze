@@ -18,11 +18,6 @@ import (
 const ClientNewConnectionMessage uint8 = 0
 const ClientUpdateRequestMessage uint8 = 1
 
-// Global variables for now
-
-var gameState = new(GameState)
-var activeConnections []*Connection
-
 // Types
 
 type Player struct {
@@ -70,8 +65,8 @@ type WebsocketHandler struct {
 func (layout MapLayout) ToBinary() []byte {
 	buffer := []byte{}
 
-	binary.BigEndian.AppendUint32(buffer, layout.width)
-	binary.BigEndian.AppendUint32(buffer, layout.height)
+	buffer = binary.BigEndian.AppendUint32(buffer, layout.width)
+	buffer = binary.BigEndian.AppendUint32(buffer, layout.height)
 
 	buffer = append(buffer, layout.tiles...)
 
@@ -87,7 +82,6 @@ func (layout MapLayout) ToBinary() []byte {
 // u32 usernameLength; 		string utf8 username;
 // ]
 func (player Player) ToBinary() []byte {
-
 	avatarBytes := []byte(player.avatarUrl)
 	avatarBytesLength := uint32(len(avatarBytes))
 
@@ -105,20 +99,22 @@ func (player Player) ToBinary() []byte {
 
 	buffer := []byte{}
 
-	binary.BigEndian.AppendUint32(buffer, avatarBytesLength)
+	buffer = binary.BigEndian.AppendUint32(buffer, avatarBytesLength)
 	buffer = append(buffer, avatarBytes...)
 
-	binary.BigEndian.AppendUint32(buffer, colorBytesLength)
+	buffer = binary.BigEndian.AppendUint32(buffer, colorBytesLength)
 	buffer = append(buffer, colorBytes...)
 
-	binary.BigEndian.AppendUint32(buffer, displayNameBytesLength)
+	buffer = binary.BigEndian.AppendUint32(buffer, displayNameBytesLength)
 	buffer = append(buffer, displayNameBytes...)
 
-	binary.BigEndian.AppendUint32(buffer, idBytesLength)
+	buffer = binary.BigEndian.AppendUint32(buffer, idBytesLength)
 	buffer = append(buffer, idBytes...)
 
-	binary.BigEndian.AppendUint32(buffer, usernameBytesLength)
+	buffer = binary.BigEndian.AppendUint32(buffer, usernameBytesLength)
 	buffer = append(buffer, usernameBytes...)
+
+	log.Print(string(buffer))
 
 	return buffer
 }
@@ -199,12 +195,12 @@ func (playerSnapshot PlayerSnapshot) ToBinary() []byte {
 
 	buffer = append(buffer, playerBytes...)
 
-	binary.BigEndian.AppendUint64(buffer, positionXBytes)
-	binary.BigEndian.AppendUint64(buffer, positionYBytes)
-	binary.BigEndian.AppendUint64(buffer, velocityXBytes)
-	binary.BigEndian.AppendUint64(buffer, velocityYBytes)
+	buffer = binary.BigEndian.AppendUint64(buffer, positionXBytes)
+	buffer = binary.BigEndian.AppendUint64(buffer, positionYBytes)
+	buffer = binary.BigEndian.AppendUint64(buffer, velocityXBytes)
+	buffer = binary.BigEndian.AppendUint64(buffer, velocityYBytes)
 
-	binary.BigEndian.AppendUint64(buffer, playerSnapshot.snapshotTimestampMs)
+	buffer = binary.BigEndian.AppendUint64(buffer, playerSnapshot.snapshotTimestampMs)
 
 	return buffer
 }
@@ -220,8 +216,8 @@ func (gameState GameState) ToBinary() []byte {
 	var numPlayers uint32 = uint32(len(gameState.playerStates))
 	buffer = binary.BigEndian.AppendUint32(buffer, numPlayers)
 
-	for _, player := range gameState.playerStates {
-		buffer = append(buffer, player.ToBinary()...)
+	for _, playerState := range gameState.playerStates {
+		buffer = append(buffer, playerState.ToBinary()...)
 	}
 
 	buffer = append(buffer, gameState.mapLayout.ToBinary()...)
@@ -255,11 +251,14 @@ func HandleBinaryMessage(p []byte, address string) error {
 			if connection.address == address {
 				connection.uuid = player.id
 			}
-			connection.connection.WriteMessage(websocket.BinaryMessage, gameState.ToBinary())
+			message := gameState.ToBinary()
+			connection.connection.WriteMessage(websocket.BinaryMessage, message)
 			c++
+			log.Print("Sent message to client. Size: " + fmt.Sprint(len(message)) + " bytes.")
 		}
 
 		log.Print("Sent back game state to " + fmt.Sprint(c) + " connections. Active connections: " + fmt.Sprint(len(activeConnections)))
+		log.Print(gameState)
 	case ClientUpdateRequestMessage:
 		// ENCODING:
 		// bytes[0:1] = message type
@@ -298,6 +297,11 @@ func HandleBinaryMessage(p []byte, address string) error {
 
 		} else {
 			log.Print("Could not find user with id: " + uuid)
+		}
+		for _, connection := range activeConnections {
+			message := gameState.ToBinary()
+			connection.connection.WriteMessage(websocket.BinaryMessage, message)
+			log.Print("Sent message to client. Size: " + fmt.Sprint(len(message)) + " bytes.")
 		}
 
 	default:
@@ -380,12 +384,15 @@ func (wsh WebsocketHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+// Global variables for now
+
+var gameState = new(GameState)
+var activeConnections []*Connection
+
 func main() {
-	gameState.playerStates = append(gameState.playerStates, PlayerSnapshot{
-		player: Player{
-			id: "A",
-		},
-	})
+	gameState.mapLayout.width = 3
+	gameState.mapLayout.height = 3
+	gameState.mapLayout.tiles = append(gameState.mapLayout.tiles, 0b111_101_11, 0b1_000_0000)
 
 	webSocketHandler := WebsocketHandler{
 		upgrader: websocket.Upgrader{
