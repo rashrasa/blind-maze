@@ -8,8 +8,8 @@ import (
 	"math"
 	"net/http"
 	"runtime"
-	"strconv"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/gorilla/websocket"
@@ -264,8 +264,6 @@ func (gameState GameState) ToBinary() []byte {
 }
 
 func HandleBinaryMessage(p []byte, address string) error {
-	log.Print("Received message. Message size: " + fmt.Sprint(len(p)) + " bytes")
-
 	messageType := p[0]
 	switch messageType {
 	case ClientNewConnectionMessage:
@@ -290,13 +288,16 @@ func HandleBinaryMessage(p []byte, address string) error {
 				connection.uuid = player.id
 			}
 			message := gameState.ToBinary()
-			connection.connection.WriteMessage(websocket.BinaryMessage, message)
+			connection.WriteMessage(websocket.BinaryMessage, message)
 			c++
-			log.Print("Sent message to client. Size: " + fmt.Sprint(len(message)) + " bytes.")
+			log.Print("Sent new player message to client. Size: " + fmt.Sprint(len(message)) + " bytes.")
+			log.Print("Active connections: ")
+			for _, connection := range activeConnections {
+				log.Print(connection)
+			}
+
 		}
 
-		log.Print("Sent back game state to " + fmt.Sprint(c) + " connections. Active connections: " + fmt.Sprint(len(activeConnections)))
-		log.Print(gameState)
 	case ClientUpdateRequestMessage:
 		// ENCODING:
 		// bytes[0:1] = message type
@@ -308,19 +309,15 @@ func HandleBinaryMessage(p []byte, address string) error {
 			return err
 		}
 
-		log.Print("Attempting to find user with id " + newPlayerSnapshot.player.id)
 		for i, playerSnapshotItem := range gameState.playerStates {
 			if strings.Trim(playerSnapshotItem.player.id, "\n") == strings.Trim(newPlayerSnapshot.player.id, "\n") {
-				log.Print("Found: " + playerSnapshotItem.player.id)
 				gameState.playerStates[i] = newPlayerSnapshot
 				break
 			}
 		}
 		for _, connection := range activeConnections {
 			message := gameState.ToBinary()
-			connection.connection.WriteMessage(websocket.BinaryMessage, message)
-			log.Print("Sent message to client. Size: " + fmt.Sprint(len(message)) + " bytes.")
-			log.Print(message)
+			connection.WriteMessage(websocket.BinaryMessage, message)
 		}
 
 	default:
@@ -331,9 +328,17 @@ func HandleBinaryMessage(p []byte, address string) error {
 }
 
 type Connection struct {
-	address    string
-	connection *websocket.Conn
-	uuid       string
+	address     string
+	_connection *websocket.Conn
+	uuid        string
+	_lock       *sync.RWMutex
+}
+
+func (c Connection) WriteMessage(messageType int, data []byte) {
+	c._lock.Lock()
+	defer c._lock.Unlock()
+
+	c._connection.WriteMessage(messageType, data)
 }
 
 func CheckOrigin(request *http.Request) bool {
@@ -350,21 +355,32 @@ func (wsh WebsocketHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	log.Println("New connection from " + r.RemoteAddr)
 	defer conn.Close()
 	defer func() {
-		for i, connection := range activeConnections {
-			if connection.address == conn.RemoteAddr().String() {
-				// Replaces connection to remove with the rest of the list
-				activeConnections[i] = activeConnections[len(activeConnections)-1]
-
-				// Replaces array with slice from 0 to length-1
-				activeConnections = activeConnections[:len(activeConnections)-1]
+		if r := recover(); r != nil {
+			switch r := r.(type) {
+			case runtime.Error:
+				log.Print("Server panicked. Error: " + r.Error() + "\n")
+			default:
+				log.Print(r)
 			}
 		}
-		log.Println("Active connections: " + strconv.Itoa(len(activeConnections)))
+		log.Print("Disconnected: " + conn.RemoteAddr().String())
+		for i, connection := range activeConnections {
+			if connection.address == conn.RemoteAddr().String() {
+				// Removes item i
+				activeConnections = append(activeConnections[:i], activeConnections[i+1:]...)
+			}
+		}
+		log.Print("Active connections: ")
+		for _, connection := range activeConnections {
+			log.Print(connection)
+		}
 	}()
 
 	connection := new(Connection)
 	connection.address = conn.RemoteAddr().String()
-	connection.connection = conn
+	connection._lock = new(sync.RWMutex)
+	// Direct access only for assignment
+	connection._connection = conn
 
 	activeConnections = append(activeConnections, connection)
 
@@ -381,6 +397,8 @@ func (wsh WebsocketHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 					switch r := r.(type) {
 					case runtime.Error:
 						log.Print("Could not handle request properly. " + r.Error() + "\n")
+					default:
+						log.Print(r)
 					}
 				}
 			}()
@@ -390,10 +408,9 @@ func (wsh WebsocketHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 				log.Print("Received message in invalid format. Error: " + err.Error())
 				return
 			}
-			log.Print("Done processing message")
 
 			for _, connection := range activeConnections {
-				connection.connection.WriteMessage(websocket.BinaryMessage, gameState.ToBinary())
+				connection.WriteMessage(websocket.BinaryMessage, gameState.ToBinary())
 			}
 
 		case websocket.TextMessage:
