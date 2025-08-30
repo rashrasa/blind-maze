@@ -296,13 +296,13 @@ describe('game_types methods', () => {
         bufferView.setUint32(counter, 3)
         counter += 4
 
-        bufferView.setUint8(counter, 0b11110111)
+        //tiles
+        bufferView.setUint8(counter, 0b111_101_11)
+        counter += 1
+        bufferView.setUint8(counter, 0b1_0000000)
         counter += 1
 
-        bufferView.setUint8(counter, 0b10000000)
-        counter += 1
-
-        expect(counter).toBe(buffer.byteLength)
+        expect(counter).toBe(buffer.byteLength) // test check
 
         let gameState: GameSnapshot = gameStateFromBinary(buffer)
         expect(gameState.playerStates.length).toBe(1)

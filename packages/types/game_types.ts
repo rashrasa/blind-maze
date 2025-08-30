@@ -177,30 +177,35 @@ function gameStateFromBinary(buffer: ArrayBufferLike): GameSnapshot {
     counter += 4
     let mapHeight = bufferView.getUint32(counter)
     counter += 4
+
     let tiles: TileType[][] = []
     let mapBytesLength: number = Math.ceil((1.0 * mapWidth * mapHeight) / 8.0)
 
     let i = 0
     let row: TileType[] = []
     for (let k = 0; k < mapBytesLength; k++) {
-        let byte = bufferView.getUint8(k)!
-        for (let bitIndex = 7; bitIndex >= 0; bitIndex--) {
-            let tile = ((byte >> bitIndex) == 1) ? TileType.WALL : TileType.EMPTY
-            row.push(tile)
+        let byte = bufferView.getUint8(counter)
+        counter += 1
+        console.log(byte)
+        for (let bitIndex = 0; bitIndex < 8; bitIndex++) {
+            let digit = byte >> bitIndex & 0b0000_0001
+
+            row.push(digit)
             i++
-            if (i > mapHeight * mapWidth) {
-                break;
-            }
-            if (i == mapWidth - 1) {
-                i = 0;
+            if (i == mapWidth) {
                 tiles.push(row)
                 row = []
             }
+            if (i >= mapHeight * mapWidth) {
+                break;
+            }
+
         }
-        if (i > mapHeight * mapWidth) {
+        if (i >= mapHeight * mapWidth) {
             break;
         }
     }
+
 
     return {
         playerStates: players,
