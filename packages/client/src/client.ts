@@ -294,7 +294,8 @@ export class GameClient {
         if (!this.isVisible) return;
         const inputKey = event.code
         if (this.lastThisPlayerSnapshot == null) {
-            throw Error("Unexpected Error: thisPlayer state is null")
+            console.warn("Unexpected Error: thisPlayer state is null")
+            return
         }
         switch (inputKey) {
             case "ArrowUp":
@@ -323,7 +324,8 @@ export class GameClient {
         if (!this.isVisible) return;
         const inputKey = event.code
         if (this.lastThisPlayerSnapshot == null) {
-            throw Error("Unexpected Error: thisPlayer state is null")
+            console.warn("Unexpected Error: thisPlayer state is null")
+            return
         }
         switch (inputKey) {
             case "ArrowUp":
@@ -351,7 +353,8 @@ export class GameClient {
     private handleInputState() {
         if (!this.isVisible) return;
         if (this.lastThisPlayerSnapshot == null) {
-            throw Error("Unexpected Error: thisPlayer state is null")
+            console.warn("Unexpected Error: thisPlayer state is null")
+            return
         }
         let velocity = {
             x: 0,
