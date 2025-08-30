@@ -127,7 +127,7 @@ func (player Player) ToBinary() []byte {
 // u32 idLength; 			string utf8 id;
 // u32 usernameLength; 		string utf8 username;
 // ]
-func PlayerFromBinary(p []byte) Player {
+func PlayerFromBinary(p []byte) (Player, uint32) {
 	var counter uint32 = 0
 
 	avatarLength := binary.BigEndian.Uint32(p[counter : counter+4])
@@ -161,7 +161,7 @@ func PlayerFromBinary(p []byte) Player {
 		displayName: displayName,
 		id:          id,
 		username:    username,
-	}
+	}, counter
 }
 
 // ENCODING:
@@ -205,6 +205,46 @@ func (playerSnapshot PlayerSnapshot) ToBinary() []byte {
 	return buffer
 }
 
+func PlayerSnapshotFromBinary(p []byte) (PlayerSnapshot, error) {
+	defer func() {
+		if r := recover(); r != nil {
+			switch r := r.(type) {
+			case runtime.Error:
+				log.Print("Could not handle request properly. " + r.Error() + "\n")
+
+			}
+		}
+	}()
+	counter := uint32(0)
+
+	isLeader := p[counter] == 1
+	counter += 1
+
+	player, playerNumBytes := PlayerFromBinary(p[1:])
+	counter += playerNumBytes
+
+	posX := math.Float64frombits(binary.BigEndian.Uint64(p[counter : counter+8]))
+	counter += 8
+	posY := math.Float64frombits(binary.BigEndian.Uint64(p[counter : counter+8]))
+	counter += 8
+
+	velX := math.Float64frombits(binary.BigEndian.Uint64(p[counter : counter+8]))
+	counter += 8
+	velY := math.Float64frombits(binary.BigEndian.Uint64(p[counter : counter+8]))
+	counter += 8
+
+	timestamp := binary.BigEndian.Uint64(p[counter : counter+8])
+	counter += 8
+
+	return PlayerSnapshot{
+		isLeader:            isLeader,
+		player:              player,
+		position:            Vector2[float64]{posX, posY},
+		velocity:            Vector2[float64]{velX, velY},
+		snapshotTimestampMs: timestamp,
+	}, nil
+}
+
 // ENCODING:
 // [
 // u32 numPlayers;	PlayerSnapshot[];
@@ -235,7 +275,7 @@ func HandleBinaryMessage(p []byte, address string) error {
 		// ENCODING:
 		// bytes[0:1] = message type
 		// bytes[1:] = Player object
-		player := PlayerFromBinary(p[1:])
+		player, _ := PlayerFromBinary(p[1:])
 
 		log.Print("Parsed player")
 		log.Print(player)
@@ -262,41 +302,21 @@ func HandleBinaryMessage(p []byte, address string) error {
 	case ClientUpdateRequestMessage:
 		// ENCODING:
 		// bytes[0:1] = message type
-		// bytes[1:5] = Message length,
-		// bytes[5:Message Length-32] = uuid,
-		// bytes[Message Length-32: Message Length-16] = position,
-		// bytes[Message Length-16: Message Length] = velocity
-		messageLength := binary.BigEndian.Uint32(p[1:5])
-		if (messageLength) != uint32(len(p)) {
-			return errors.New("message in an invalid format")
+		// bytes[1:] = playerSnapshot,
+
+		newPlayerSnapshot, err := PlayerSnapshotFromBinary(p[1:])
+		if err != nil {
+			log.Print("Could not parse player snapshot from message. " + err.Error())
+			return err
 		}
 
-		uuid := string(p[5 : messageLength-32])
-		position := Vector2[float64]{
-			x: math.Float64frombits(binary.BigEndian.Uint64(p[messageLength-32 : messageLength-24])),
-			y: math.Float64frombits(binary.BigEndian.Uint64(p[messageLength-24 : messageLength-16])),
-		}
-		velocity := Vector2[float64]{
-			x: math.Float64frombits(binary.BigEndian.Uint64(p[messageLength-16 : messageLength-8])),
-			y: math.Float64frombits(binary.BigEndian.Uint64(p[messageLength-8 : messageLength-0])),
-		}
-
-		log.Print("Attempting to find user with id " + uuid)
-		var playerSnapshot *PlayerSnapshot
-		for _, playerSnapshotItem := range gameState.playerStates {
-			if strings.Trim(playerSnapshotItem.player.id, "\n") == strings.Trim(uuid, "\n") {
+		log.Print("Attempting to find user with id " + newPlayerSnapshot.player.id)
+		for i, playerSnapshotItem := range gameState.playerStates {
+			if strings.Trim(playerSnapshotItem.player.id, "\n") == strings.Trim(newPlayerSnapshot.player.id, "\n") {
 				log.Print("Found: " + playerSnapshotItem.player.id)
-				playerSnapshot = &playerSnapshotItem
+				gameState.playerStates[i] = newPlayerSnapshot
 				break
 			}
-		}
-		if playerSnapshot != nil {
-			log.Print("Found user. id: " + playerSnapshot.player.id)
-			playerSnapshot.position = position
-			playerSnapshot.velocity = velocity
-
-		} else {
-			log.Print("Could not find user with id: " + uuid)
 		}
 		for _, connection := range activeConnections {
 			message := gameState.ToBinary()
@@ -368,7 +388,7 @@ func (wsh WebsocketHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 			err := HandleBinaryMessage(bytes, conn.RemoteAddr().String())
 			if err != nil {
 				conn.WriteMessage(websocket.TextMessage, []byte("Received message in invalid format"))
-				log.Print("Received message in invalid format")
+				log.Print("Received message in invalid format. Error: " + err.Error())
 				return
 			}
 			log.Print("Done processing message")
