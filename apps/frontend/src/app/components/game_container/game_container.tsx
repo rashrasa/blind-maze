@@ -27,10 +27,10 @@ const player: Player = {
 export default function GameContainer() {
     const container = useRef<HTMLDivElement | null>(null);
 
-    const CLIENT_WIDTH_PX = 1800
+    const CLIENT_WIDTH_PX = 1600
     const CLIENT_HEIGHT_PX = 900
 
-    useLayoutEffect(() => {
+    useEffect(() => {
         let client = new GameClient(player, container.current!, CLIENT_WIDTH_PX, CLIENT_HEIGHT_PX);
         client.connectToServer("ws://localhost:3001")
         client.setVisibility(true)
@@ -38,7 +38,7 @@ export default function GameContainer() {
         return () => {
             client.dispose()
         }
-    }
+    }, []
     )
     return (
         <div
