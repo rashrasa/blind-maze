@@ -279,7 +279,7 @@ func HandleBinaryMessage(p []byte, address string) error {
 		log.Print(player)
 		gameState.playerStates = append(gameState.playerStates, PlayerSnapshot{
 			player:              player,
-			position:            Vector2[float64]{0, 0},
+			position:            Vector2[float64]{1.8, 1.8},
 			velocity:            Vector2[float64]{0, 0},
 			isLeader:            false,
 			snapshotTimestampMs: uint64(time.Now().UnixMilli()),
@@ -409,9 +409,19 @@ var gameState = new(GameState)
 var activeConnections []*Connection
 
 func main() {
-	gameState.mapLayout.width = 9
-	gameState.mapLayout.height = 4
-	gameState.mapLayout.tiles = append(gameState.mapLayout.tiles, 0b1111_1111, 0b1_100_0000, 0b0110_0000, 0b0011_1111, 0b1111_0000)
+	gameState.mapLayout.width = 16
+	gameState.mapLayout.height = 9
+	gameState.mapLayout.tiles = append(gameState.mapLayout.tiles,
+		0b1111_1111, 0b1111_1111,
+		0b1000_0000, 0b0000_0001,
+		0b1000_0000, 0b0000_0001,
+		0b1000_0001, 0b1000_0001,
+		0b1000_0001, 0b1000_0001,
+		0b1000_0000, 0b0000_0001,
+		0b1000_0000, 0b0110_0001,
+		0b1000_0110, 0b0000_0001,
+		0b1111_1111, 0b1111_1111,
+	)
 
 	webSocketHandler := WebsocketHandler{
 		upgrader: websocket.Upgrader{
