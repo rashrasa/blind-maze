@@ -87,7 +87,7 @@ export class GameClient {
         this.disposed = true;
     }
 
-
+    /**  On successful connection, starts rendering immediately. */
     public async connectToServer(serverLocation: string): Promise<boolean> {
         let connection = new WebSocketAsPromised(serverLocation);
         await connection.open();
