@@ -24,11 +24,11 @@ export default function NavBar() {
             displayName: "Home",
             route: "/"
         },
-        {
-            passedKey: "leaderboards",
-            displayName: "Leaderboards",
-            route: "/leaderboards"
-        }
+        // {
+        //     passedKey: "leaderboards",
+        //     displayName: "Leaderboards",
+        //     route: "/leaderboards"
+        // }
     ]
     let trailing: NavBarElementData[] = [
         {
