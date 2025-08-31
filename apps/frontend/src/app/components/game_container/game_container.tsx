@@ -24,7 +24,11 @@ const player: Player = {
     color: playerColor
 }
 
-export default function GameContainer() {
+interface GameContainerProps {
+    playerId: string
+}
+
+export default function GameContainer({ playerId }: GameContainerProps) {
     const container = useRef<HTMLDivElement | null>(null);
 
     const CLIENT_WIDTH_PX = 1600
