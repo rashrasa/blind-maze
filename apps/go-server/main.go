@@ -369,7 +369,14 @@ func (wsh WebsocketHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 				// Removes item i
 				activeConnections = append(activeConnections[:i], activeConnections[i+1:]...)
 			}
+			for j, player := range gameState.playerStates {
+				if player.player.id == connection.uuid {
+					// Removes item j
+					gameState.playerStates = append(gameState.playerStates[:j], gameState.playerStates[j+1:]...)
+				}
+			}
 		}
+
 		log.Print("Active connections: ")
 		for _, connection := range activeConnections {
 			log.Print(connection)
