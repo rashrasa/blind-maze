@@ -33,7 +33,7 @@ export default function NavBar() {
     let trailing: NavBarElementData[] = [
         {
             passedKey: "authentication",
-            displayName: "Sign In",
+            displayName: "Account",
             route: "/login"
         }
     ]

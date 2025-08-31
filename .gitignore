@@ -89,3 +89,5 @@ output.csv
 exclude/*
 
 .go/
+
+.temp/
