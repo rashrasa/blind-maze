@@ -1,9 +1,10 @@
 {
     "extends": "@blind-maze/typescript-config/base",
+
     "include": [
         "src/*"
     ],
     "compilerOptions": {
-        "outDir": "dist",
-    }
+        "outDir": "dist"
+    },
 }

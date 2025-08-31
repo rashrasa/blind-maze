@@ -12,80 +12,78 @@ import type {
     PlayerSnapshot,
 } from "@blind-maze/types";
 
+import { DefaultRenderer, PLAYER_SPEED, PLAYER_SQUARE_LENGTH_TILES, Renderer } from "./core/renderer.js"
+import { DefaultInputHandler, InputHandler } from "./core/inputs.js"
 
 import WebSocketAsPromised from "websocket-as-promised";
 import "crypto";
 
-const PLAYER_SPEED = 10
-const PIXELS_PER_TILE = 50
-const PLAYER_SQUARE_LENGTH_TILES = .5
-
 // Appends itself to container
 export class GameClient {
-    // Instance constants
-    private readonly container: HTMLDivElement;
-    private readonly canvas: HTMLCanvasElement;
+    private renderer: Renderer;
+    private inputHandler: InputHandler;
     private readonly thisPlayer: Player;
-    private readonly viewPortWidthPx: number;
-    private readonly viewPortHeightPx: number;
-    private readonly clientContainer: HTMLElement
-
-    private updates = 0;
 
     // State
     private host: string | null;
     private webSocketConnection: WebSocket | null;
     private lastGameSnapshot: GameSnapshot | null;
     private lastThisPlayerSnapshot: PlayerSnapshot | null;
-    private keysPressed: Map<string, boolean>
-    private isVisible = false;
+    private lastRenderMs: number;
+    private updates: number;
+
     private disposed: boolean;
-    private lastRenderMs: number = 0;
 
     constructor(player: Player, clientContainer: HTMLElement, viewPortWidthPx: number, viewPortHeightPx: number) {
-        this.container = document.createElement("div");
-        this.container.className = `w-[${viewPortWidthPx}px] h-[${viewPortHeightPx}px]`
+        this.renderer = new DefaultRenderer(clientContainer, viewPortWidthPx, viewPortHeightPx);
+        this.inputHandler = new DefaultInputHandler(this.renderer.getMainCanvas())
 
-        this.container.style.display = "none"
+        this.updates = 0;
+        this.lastRenderMs = 0;
 
-        this.viewPortWidthPx = viewPortWidthPx;
-        this.viewPortHeightPx = viewPortHeightPx;
+        this.inputHandler.addInputStateHandler((keysPressed) => {
+            if (this.lastThisPlayerSnapshot != null) {
+                let newVelocity = {
+                    x: 0,
+                    y: 0
+                };
 
-        this.canvas = document.createElement("canvas");
-        this.canvas.width = viewPortWidthPx;
-        this.canvas.height = viewPortHeightPx;
-        this.clientContainer = clientContainer;
+                if (keysPressed.get("ArrowUp")) newVelocity.y -= PLAYER_SPEED;
+                if (keysPressed.get("ArrowDown")) newVelocity.y += PLAYER_SPEED;
+                if (keysPressed.get("ArrowLeft")) newVelocity.x -= PLAYER_SPEED;
+                if (keysPressed.get("ArrowRight")) newVelocity.x += PLAYER_SPEED;
 
-        if (this.clientContainer.ownerDocument.defaultView == null) {
-            console.error("Could not bind keyboard events to window.");
-        }
-        else {
-            this.clientContainer.ownerDocument.defaultView.addEventListener("keydown", this.handleKeyDown.bind(this));
-            this.clientContainer.ownerDocument.defaultView.addEventListener("keyup", this.handleKeyUp.bind(this));
-        }
+
+                let updatedState: PlayerSnapshot = {
+                    player: this.lastThisPlayerSnapshot.player,
+                    isLeader: this.lastThisPlayerSnapshot.isLeader,
+                    position: {
+                        x: this.lastThisPlayerSnapshot.position.x,
+                        y: this.lastThisPlayerSnapshot.position.y
+                    },
+                    velocity: newVelocity,
+                    snapshotTimestampMs: Date.now()
+                }
+                this.lastThisPlayerSnapshot = updatedState;
+            }
+            else {
+                console.warn("Received input before receiving initial game state. Ignoring..")
+            }
+        })
 
         this.thisPlayer = player;
-        this.container.appendChild(this.canvas);
-        clientContainer.appendChild(this.container);
-
         this.host = null;
         this.webSocketConnection = null;
         this.lastGameSnapshot = null;
         this.lastThisPlayerSnapshot = null;
-        this.keysPressed = new Map()
         this.disposed = false
     }
 
     public dispose() {
-        if (this.clientContainer.ownerDocument.defaultView == null) {
-            console.error("Could not unbind keyboard events to window.");
-        }
-        else {
-            this.setVisibility(false)
-            this.webSocketConnection?.close()
-            this.clientContainer.ownerDocument.defaultView?.removeEventListener("keydown", this.handleKeyDown.bind(this))
-            this.clientContainer.ownerDocument.defaultView?.removeEventListener("keyup", this.handleKeyUp.bind(this))
-        }
+        this.renderer.dispose()
+        this.inputHandler.dispose()
+        this.webSocketConnection?.close()
+
         this.disposed = true;
     }
 
@@ -155,17 +153,11 @@ export class GameClient {
     }
 
     public setVisibility(visible: boolean) {
-        if (visible) {
-            this.container.style.display = "block"
-        }
-        else {
-            this.container.style.display = "none"
-        }
-        this.isVisible = visible;
+        this.renderer.setVisibility(visible)
     }
 
     public isClientVisible() {
-        return this.isVisible;
+        return this.renderer.isClientVisible();
     }
 
     private async renderUntilStopped(timeElapsed: number) {
@@ -175,9 +167,18 @@ export class GameClient {
             return;
         }
         if (this.lastGameSnapshot != null) {
-            this.handleInputState()
+            if (!this.isClientVisible()) return;
+            if (this.lastThisPlayerSnapshot == null) {
+                console.warn("Warning: thisPlayer state is null")
+                return
+            }
+            this.inputHandler.handleInputState()
             this.tick(timeElapsed - this.lastRenderMs);
-            this.renderGameOnCanvas(this.lastGameSnapshot)
+            this.renderer.render(
+                this.lastGameSnapshot,
+                this.lastThisPlayerSnapshot.position.x,
+                this.lastThisPlayerSnapshot.position.y
+            )
             this.lastRenderMs = timeElapsed;
             this.updates++;
             await this.sendUpdateToServer(this.webSocketConnection!, this.lastThisPlayerSnapshot!)
@@ -185,66 +186,6 @@ export class GameClient {
         requestAnimationFrame(this.renderUntilStopped.bind(this))
     }
 
-    private renderGameOnCanvas(state: GameSnapshot | null) {
-        const context = this.canvas.getContext("2d");
-        if (context == null) {
-            console.warn("Attempted to draw on non-existant canvas")
-            return
-        }
-
-        context.fillStyle = "black"
-        context.lineWidth = 0;
-        context.fillRect(0, 0, this.viewPortWidthPx, this.viewPortHeightPx)
-
-        if (state == null) {
-            console.warn("Could not render full client, state is null");
-            return;
-        }
-
-        const playerStates: PlayerSnapshot[] = state.playerStates
-
-        const CENTER_X = this.lastThisPlayerSnapshot?.position.x ?? 7.5
-        const CENTER_Y = this.lastThisPlayerSnapshot?.position.y ?? 7.5
-
-        const tiles: TileType[][] = state.map.tiles;
-
-        context.strokeStyle = "black"
-        // Row
-        for (let i = 0; i < tiles.length; i++) {
-            // Column
-            for (let j = 0; j < tiles[i]!.length; j++) {
-                context.fillStyle = tiles[i]![j] ? "white" : "black"
-                context.fillRect(
-                    this.viewPortWidthPx / 2 + (-CENTER_X + j) * PIXELS_PER_TILE,
-                    this.viewPortHeightPx / 2 + (-CENTER_Y + i) * PIXELS_PER_TILE,
-                    PIXELS_PER_TILE,
-                    PIXELS_PER_TILE
-                )
-            }
-        }
-
-        context.strokeStyle = "white"
-        context.lineWidth = 2
-        for (const player of playerStates) {
-            if (player == undefined) {
-                console.warn("WARNING: Undefined player object received.")
-                continue;
-            }
-            const playerX = player.position.x
-            const playerY = player.position.y
-            context.fillStyle = player.player.color ?? "white"
-            context.beginPath()
-            context.arc(
-                this.viewPortWidthPx / 2 + (-CENTER_X + playerX) * PIXELS_PER_TILE,
-                this.viewPortHeightPx / 2 + (-CENTER_Y + playerY) * PIXELS_PER_TILE,
-                PLAYER_SQUARE_LENGTH_TILES * PIXELS_PER_TILE / 2,
-                0,
-                2 * Math.PI
-            )
-            context.fill()
-        }
-
-    }
 
     private async sendUpdateToServer(server: WebSocket, updatedState: PlayerSnapshot): Promise<void> {
         server.send(composeUpdateMessageToServer(updatedState));
@@ -336,97 +277,6 @@ export class GameClient {
                 x: newVX,
                 y: newVY
             },
-            snapshotTimestampMs: Date.now()
-        }
-        this.lastThisPlayerSnapshot = updatedState;
-
-    }
-
-    private handleKeyUp(event: KeyboardEvent) {
-        if (!this.isVisible) return;
-        const inputKey = event.code
-        if (this.lastThisPlayerSnapshot == null) {
-            console.warn("Warning: thisPlayer state is null")
-            return
-        }
-        switch (inputKey) {
-            case "ArrowUp":
-                event.preventDefault()
-                this.keysPressed.set("ArrowUp", false)
-                break;
-            case "ArrowDown":
-                event.preventDefault()
-                this.keysPressed.set("ArrowDown", false)
-                break;
-            case "ArrowLeft":
-                event.preventDefault()
-                this.keysPressed.set("ArrowLeft", false)
-                break;
-            case "ArrowRight":
-                event.preventDefault()
-                this.keysPressed.set("ArrowRight", false)
-                break;
-            default:
-                return;
-        }
-        this.handleInputState();
-    }
-
-    private handleKeyDown(event: KeyboardEvent) {
-        if (!this.isVisible) return;
-        const inputKey = event.code
-        if (this.lastThisPlayerSnapshot == null) {
-            console.warn("Warning: thisPlayer state is null")
-            return
-        }
-        switch (inputKey) {
-            case "ArrowUp":
-                event.preventDefault()
-                this.keysPressed.set("ArrowUp", true)
-                break;
-            case "ArrowDown":
-                event.preventDefault()
-                this.keysPressed.set("ArrowDown", true)
-                break;
-            case "ArrowLeft":
-                event.preventDefault()
-                this.keysPressed.set("ArrowLeft", true)
-                break;
-            case "ArrowRight":
-                event.preventDefault()
-                this.keysPressed.set("ArrowRight", true)
-                break;
-            default:
-                return;
-        }
-        this.handleInputState();
-    }
-
-    private handleInputState() {
-        if (!this.isVisible) return;
-        if (this.lastThisPlayerSnapshot == null) {
-            console.warn("Warning: thisPlayer state is null")
-            return
-        }
-        let velocity = {
-            x: 0,
-            y: 0
-        };
-
-        if (this.keysPressed.get("ArrowUp")) velocity.y -= PLAYER_SPEED;
-        if (this.keysPressed.get("ArrowDown")) velocity.y += PLAYER_SPEED;
-        if (this.keysPressed.get("ArrowLeft")) velocity.x -= PLAYER_SPEED;
-        if (this.keysPressed.get("ArrowRight")) velocity.x += PLAYER_SPEED;
-
-
-        let updatedState: PlayerSnapshot = {
-            player: this.lastThisPlayerSnapshot.player,
-            isLeader: this.lastThisPlayerSnapshot.isLeader,
-            position: {
-                x: this.lastThisPlayerSnapshot.position.x,
-                y: this.lastThisPlayerSnapshot.position.y
-            },
-            velocity: velocity,
             snapshotTimestampMs: Date.now()
         }
         this.lastThisPlayerSnapshot = updatedState;
