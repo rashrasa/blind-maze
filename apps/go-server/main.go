@@ -16,6 +16,13 @@ import (
 	"go-server/types"
 )
 
+/*
+	@blind-maze/go-server
+
+	Hosts a single instance of Blind Maze
+
+*/
+
 const ClientNewConnectionMessage uint8 = 0
 const ClientUpdateRequestMessage uint8 = 1
 
@@ -46,12 +53,12 @@ func HandleBinaryMessage(p []byte, address string) error {
 		// ENCODING:
 		// bytes[0:1] = message type
 		// bytes[1:] = Player object
-		player, _ := types.PlayerFromBinary(p[1:])
+		uuid, _ := types.DecodeString(p[1:])
 
 		log.Print("Parsed player")
-		log.Print(player)
+		log.Print(uuid)
 		gameState.PlayerStates = append(gameState.PlayerStates, types.PlayerSnapshot{
-			Player:              player,
+			Uuid:                uuid,
 			Position:            types.Vector2[float64]{X: 1.8, Y: 1.8},
 			Velocity:            types.Vector2[float64]{X: 0, Y: 0},
 			IsLeader:            false,
@@ -60,7 +67,7 @@ func HandleBinaryMessage(p []byte, address string) error {
 		c := 0
 		for _, connection := range activeConnections {
 			if connection.address == address {
-				connection.uuid = player.Id
+				connection.uuid = uuid
 			}
 			message := gameState.ToBinary()
 			connection.WriteMessage(websocket.BinaryMessage, message)
@@ -85,7 +92,7 @@ func HandleBinaryMessage(p []byte, address string) error {
 		}
 
 		for i, playerSnapshotItem := range gameState.PlayerStates {
-			if strings.Trim(playerSnapshotItem.Player.Id, "\n") == strings.Trim(newPlayerSnapshot.Player.Id, "\n") {
+			if strings.Trim(playerSnapshotItem.Uuid, "\n") == strings.Trim(newPlayerSnapshot.Uuid, "\n") {
 				gameState.PlayerStates[i] = newPlayerSnapshot
 				break
 			}
@@ -131,7 +138,7 @@ func (wsh WebsocketHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 				activeConnections = append(activeConnections[:i], activeConnections[i+1:]...)
 			}
 			for j, player := range gameState.PlayerStates {
-				if player.Player.Id == connection.uuid {
+				if player.Uuid == connection.uuid {
 					// Removes item j
 					gameState.PlayerStates = append(gameState.PlayerStates[:j], gameState.PlayerStates[j+1:]...)
 				}

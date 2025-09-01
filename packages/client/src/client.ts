@@ -2,7 +2,6 @@ import {
     TileType,
     gameStateFromBinary,
     composeUpdateMessageToServer,
-    playerToBinary,
     composeNewConnectionMessage
 } from "@blind-maze/types";
 
@@ -55,7 +54,7 @@ export class GameClient {
 
 
                 let updatedState: PlayerSnapshot = {
-                    player: this.lastThisPlayerSnapshot.player,
+                    uuid: this.lastThisPlayerSnapshot.uuid,
                     isLeader: this.lastThisPlayerSnapshot.isLeader,
                     position: {
                         x: this.lastThisPlayerSnapshot.position.x,
@@ -77,6 +76,10 @@ export class GameClient {
         this.lastGameSnapshot = null;
         this.lastThisPlayerSnapshot = null;
         this.disposed = false
+    }
+
+    public attachPlayerIdentity(player: Player) {
+        this.renderer.attachPlayerIdentity(player)
     }
 
     public dispose() {
@@ -125,14 +128,14 @@ export class GameClient {
                 }
 
                 const thisPlayerSnapshot: PlayerSnapshot | undefined = data.playerStates.find((playerState) =>
-                    playerState.player.id === this.thisPlayer.id
+                    this.thisPlayer.uuid === playerState.uuid
                 )
                 if (thisPlayerSnapshot != undefined) {
                     this.lastThisPlayerSnapshot = thisPlayerSnapshot;
                 }
                 else {
                     this.lastThisPlayerSnapshot = null
-                    console.warn("Received game state without current player.")
+                    console.warn(`Received game state without current player. This player id: ${this.thisPlayer.uuid}`)
                 }
 
                 this.lastGameSnapshot = data
@@ -144,7 +147,7 @@ export class GameClient {
             this.host = serverLocation
             this.webSocketConnection = connection.ws
         }
-        let initialMessage: Uint8Array = composeNewConnectionMessage(this.thisPlayer)
+        let initialMessage: Uint8Array = composeNewConnectionMessage(this.thisPlayer.uuid)
 
         connection.ws.send(initialMessage)
 
@@ -170,6 +173,7 @@ export class GameClient {
             if (!this.isClientVisible()) return;
             if (this.lastThisPlayerSnapshot == null) {
                 console.warn("Warning: thisPlayer state is null")
+                requestAnimationFrame(this.renderUntilStopped.bind(this))
                 return
             }
             this.inputHandler.handleInputState()
@@ -268,7 +272,7 @@ export class GameClient {
 
         let updatedState: PlayerSnapshot = {
             isLeader: this.lastThisPlayerSnapshot!.isLeader,
-            player: this.lastThisPlayerSnapshot!.player,
+            uuid: this.lastThisPlayerSnapshot!.uuid,
             position: {
                 x: this.lastThisPlayerSnapshot!.position.x + newVX * milliseconds / 1000.0,
                 y: this.lastThisPlayerSnapshot!.position.y + newVY * milliseconds / 1000.0

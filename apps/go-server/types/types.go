@@ -7,17 +7,9 @@ import (
 	"runtime"
 )
 
-type Player struct {
-	Id          string
-	Username    string
-	DisplayName string
-	AvatarUrl   string
-	Color       string
-}
-
 type PlayerSnapshot struct {
 	IsLeader            bool
-	Player              Player
+	Uuid                string
 	Position            Vector2[float64]
 	Velocity            Vector2[float64]
 	SnapshotTimestampMs uint64
@@ -39,6 +31,23 @@ type Vector2[T any] struct {
 	Y T
 }
 
+// u32 length; string;
+func EncodeString(s string) []byte {
+	encoded := []byte(s)
+	result := []byte{}
+	result = binary.BigEndian.AppendUint32(result, uint32(len(encoded)))
+	result = append(result, encoded...)
+
+	return result
+}
+
+// u32 length; string;
+// Returns: string; total bytes traversed
+func DecodeString(p []byte) (string, uint32) {
+	length := binary.BigEndian.Uint32(p[0:4])
+	return string(p[4 : length+4]), (length + 4)
+}
+
 // ENCODING:
 // [
 // u32 width;
@@ -58,97 +67,8 @@ func (layout MapLayout) ToBinary() []byte {
 
 // ENCODING:
 // [
-// u32 avatarLength; 		string utf8 avatar;
-// u32 colorLength; 		string utf8 color;
-// u32 displayNameLength; 	string utf8 displayName;
-// u32 idLength; 			string utf8 id;
-// u32 usernameLength; 		string utf8 username;
-// ]
-func (player Player) ToBinary() []byte {
-	avatarBytes := []byte(player.AvatarUrl)
-	avatarBytesLength := uint32(len(avatarBytes))
-
-	colorBytes := []byte(player.Color)
-	colorBytesLength := uint32(len(colorBytes))
-
-	displayNameBytes := []byte(player.DisplayName)
-	displayNameBytesLength := uint32(len(displayNameBytes))
-
-	idBytes := []byte(player.Id)
-	idBytesLength := uint32(len(idBytes))
-
-	usernameBytes := []byte(player.Username)
-	usernameBytesLength := uint32(len(usernameBytes))
-
-	buffer := []byte{}
-
-	buffer = binary.BigEndian.AppendUint32(buffer, avatarBytesLength)
-	buffer = append(buffer, avatarBytes...)
-
-	buffer = binary.BigEndian.AppendUint32(buffer, colorBytesLength)
-	buffer = append(buffer, colorBytes...)
-
-	buffer = binary.BigEndian.AppendUint32(buffer, displayNameBytesLength)
-	buffer = append(buffer, displayNameBytes...)
-
-	buffer = binary.BigEndian.AppendUint32(buffer, idBytesLength)
-	buffer = append(buffer, idBytes...)
-
-	buffer = binary.BigEndian.AppendUint32(buffer, usernameBytesLength)
-	buffer = append(buffer, usernameBytes...)
-
-	return buffer
-}
-
-// ENCODING:
-// [
-// u32 avatarLength; 		string utf8 avatar;
-// u32 colorLength; 		string utf8 color;
-// u32 displayNameLength; 	string utf8 displayName;
-// u32 idLength; 			string utf8 id;
-// u32 usernameLength; 		string utf8 username;
-// ]
-func PlayerFromBinary(p []byte) (Player, uint32) {
-	var counter uint32 = 0
-
-	avatarLength := binary.BigEndian.Uint32(p[counter : counter+4])
-	counter += 4
-	avatar := string(p[counter : counter+avatarLength])
-	counter += avatarLength
-
-	colorLength := binary.BigEndian.Uint32(p[counter : counter+4])
-	counter += 4
-	color := string(p[counter : counter+colorLength])
-	counter += colorLength
-
-	displayNameLength := binary.BigEndian.Uint32(p[counter : counter+4])
-	counter += 4
-	displayName := string(p[counter : counter+displayNameLength])
-	counter += displayNameLength
-
-	idLength := binary.BigEndian.Uint32(p[counter : counter+4])
-	counter += 4
-	id := string(p[counter : counter+idLength])
-	counter += idLength
-
-	usernameLength := binary.BigEndian.Uint32(p[counter : counter+4])
-	counter += 4
-	username := string(p[counter : counter+usernameLength])
-	counter += usernameLength
-
-	return Player{
-		AvatarUrl:   avatar,
-		Color:       color,
-		DisplayName: displayName,
-		Id:          id,
-		Username:    username,
-	}, counter
-}
-
-// ENCODING:
-// [
-// bool isLeader 1 byte;
-// Player player;
+// bool isLeader 	1 byte;
+// u32 uuidLength; 	string uuid;
 // f64 position x; 	f64 position y;
 // f64 velocity x; 	f64 velocity y;
 // u64 serverTimestamp;
@@ -162,8 +82,6 @@ func (playerSnapshot PlayerSnapshot) ToBinary() []byte {
 		isLeaderByte = 0
 	}
 
-	playerBytes := playerSnapshot.Player.ToBinary()
-
 	positionXBytes := math.Float64bits(playerSnapshot.Position.X)
 	positionYBytes := math.Float64bits(playerSnapshot.Position.Y)
 
@@ -174,7 +92,7 @@ func (playerSnapshot PlayerSnapshot) ToBinary() []byte {
 
 	buffer = append(buffer, isLeaderByte)
 
-	buffer = append(buffer, playerBytes...)
+	buffer = append(buffer, EncodeString(playerSnapshot.Uuid)...)
 
 	buffer = binary.BigEndian.AppendUint64(buffer, positionXBytes)
 	buffer = binary.BigEndian.AppendUint64(buffer, positionYBytes)
@@ -201,8 +119,8 @@ func PlayerSnapshotFromBinary(p []byte) (PlayerSnapshot, error) {
 	isLeader := p[counter] == 1
 	counter += 1
 
-	player, playerNumBytes := PlayerFromBinary(p[1:])
-	counter += playerNumBytes
+	uuid, length := DecodeString(p[counter:])
+	counter += length
 
 	posX := math.Float64frombits(binary.BigEndian.Uint64(p[counter : counter+8]))
 	counter += 8
@@ -219,7 +137,7 @@ func PlayerSnapshotFromBinary(p []byte) (PlayerSnapshot, error) {
 
 	return PlayerSnapshot{
 		IsLeader:            isLeader,
-		Player:              player,
+		Uuid:                uuid,
 		Position:            Vector2[float64]{posX, posY},
 		Velocity:            Vector2[float64]{velX, velY},
 		SnapshotTimestampMs: timestamp,

@@ -11,6 +11,7 @@ export interface Renderer {
     getMainCanvas(): HTMLElement,
     dispose(): void,
     render(state: GameSnapshot, centerX: number, centerY: number): void,
+    attachPlayerIdentity(player: Player): void,
     setVisibility(visible: boolean): void
 }
 
@@ -22,8 +23,10 @@ export class DefaultRenderer implements Renderer {
     private readonly viewPortHeightPx: number;
     private readonly clientContainer: HTMLElement
 
+    private playerIdentityMapping: Map<string, Player> = new Map<string, Player>();
     private isVisible = false;
     private disposed: boolean = false;
+
 
     constructor(clientContainer: HTMLElement, viewPortWidthPx: number, viewPortHeightPx: number) {
         this.container = document.createElement("div");
@@ -41,6 +44,9 @@ export class DefaultRenderer implements Renderer {
 
         this.container.appendChild(this.canvas);
         clientContainer.appendChild(this.container);
+    }
+    attachPlayerIdentity(player: Player): void {
+        this.playerIdentityMapping.set(player.uuid, player)
     }
 
     isClientVisible(): boolean {
@@ -106,7 +112,7 @@ export class DefaultRenderer implements Renderer {
             }
             const playerX = player.position.x
             const playerY = player.position.y
-            context.fillStyle = player.player.color ?? "white"
+            context.fillStyle = this.playerIdentityMapping.get(player.uuid)?.color ?? "white"
             context.beginPath()
             context.arc(
                 this.viewPortWidthPx / 2 + (-centerX + playerX) * PIXELS_PER_TILE,

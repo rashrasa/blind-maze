@@ -17,7 +17,7 @@ interface GameClientState {
 const playerId: string = crypto.randomUUID()
 const playerColor = `rgba(${Math.floor(Math.random() * 255 + 1)}, ${Math.floor(Math.random() * 255 + 1)}, ${Math.floor(Math.random() * 255 + 1)}, 1)`
 const player: Player = {
-    id: playerId,
+    uuid: playerId,
     displayName: "Player 0",
     username: "username",
     avatarUrl: "google.ca",
@@ -38,6 +38,9 @@ export default function GameContainer({ playerId }: GameContainerProps) {
         let client = new GameClient(player, container.current!, CLIENT_WIDTH_PX, CLIENT_HEIGHT_PX);
         client.connectToServer("ws://localhost:3001")
         client.setVisibility(true)
+
+        // TODO: Attach player identities when encountering new players, maybe in a pre-game lobby
+        client.attachPlayerIdentity(player)
 
         return () => {
             client.dispose()

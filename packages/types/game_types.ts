@@ -2,7 +2,7 @@
  * Unique and persistent player identifier
  */
 interface Player {
-    id: string;
+    uuid: string;
     username: string;
     displayName: string;
     avatarUrl: string;
@@ -14,7 +14,7 @@ interface Player {
  */
 interface PlayerSnapshot {
     isLeader: boolean;
-    player: Player;
+    uuid: string;
     position: { x: number; y: number };
     velocity: { x: number; y: number };
     snapshotTimestampMs: number;
@@ -51,9 +51,6 @@ interface MapConfiguration {
     seed: string;
 }
 
-// function gameStateToBinary(state: GameSnapshot): any {
-//     return JSON.stringify(state);
-// }
 
 
 // MapLayout ENCODING:
@@ -61,15 +58,6 @@ interface MapConfiguration {
 // u32 width;
 // u32 height;
 // flattened bitArray of map
-// ]
-
-// Player ENCODING:
-// [
-// u32 avatarLength; 		string utf8 avatar;
-// u32 colorLength; 		string utf8 color;
-// u32 displayNameLength; 	string utf8 displayName;
-// u32 idLength; 			string utf8 id;
-// u32 usernameLength; 		string utf8 username;
 // ]
 
 // PlayerSnapshot ENCODING:
@@ -102,30 +90,10 @@ function gameStateFromBinary(buffer: ArrayBufferLike): GameSnapshot {
         let isLeader: boolean = Boolean(bufferView.getUint8(counter))
         counter += 1
 
-        let avatarLength = bufferView.getUint32(counter)
+        let uuidLength = bufferView.getUint32(counter)
         counter += 4
-        let avatar = decoder.decode(buffer.slice(counter, counter + avatarLength))
-        counter += avatarLength
-
-        let colorLength = bufferView.getUint32(counter)
-        counter += 4
-        let color = decoder.decode(buffer.slice(counter, counter + colorLength))
-        counter += colorLength
-
-        let displayNameLength = bufferView.getUint32(counter)
-        counter += 4
-        let displayName = decoder.decode(buffer.slice(counter, counter + displayNameLength))
-        counter += displayNameLength
-
-        let idLength = bufferView.getUint32(counter)
-        counter += 4
-        let id = decoder.decode(buffer.slice(counter, counter + idLength))
-        counter += idLength
-
-        let usernameLength = bufferView.getUint32(counter)
-        counter += 4
-        let username = decoder.decode(buffer.slice(counter, counter + usernameLength))
-        counter += usernameLength
+        let uuid = decoder.decode(buffer.slice(counter, counter + uuidLength))
+        counter += uuidLength
 
         let positionX = bufferView.getFloat64(counter)
         counter += 8
@@ -142,13 +110,7 @@ function gameStateFromBinary(buffer: ArrayBufferLike): GameSnapshot {
 
         players.push({
             isLeader: isLeader,
-            player: {
-                avatarUrl: avatar,
-                color: color,
-                displayName: displayName,
-                id: id,
-                username: username
-            },
+            uuid: uuid,
             position: {
                 x: positionX,
                 y: positionY
@@ -203,83 +165,29 @@ function gameStateFromBinary(buffer: ArrayBufferLike): GameSnapshot {
     };
 }
 
-// Player ENCODING:
-// [
-// u32 avatarLength; 		string utf8 avatar;
-// u32 colorLength; 		string utf8 color;
-// u32 displayNameLength; 	string utf8 displayName;
-// u32 idLength; 			string utf8 id;
-// u32 usernameLength; 		string utf8 username;
-// ]
 
-function playerToBinary(player: Player): Uint8Array {
-    // 5 * 4 = number of bytes for all data except strings
-    let buffer = new ArrayBuffer(20);
-    let data = new Uint8Array(buffer);
-    let view = new DataView(data.buffer)
+// u32 len; string
+// likely inefficient to create an encoder each time
+function encodeString(s: string): Uint8Array {
     let encoder = new TextEncoder()
+    let encoded = encoder.encode(s)
+    let result = new Uint8Array(encoded.length + 4)
+    let view = new DataView(result.buffer)
+    view.setUint32(0, encoded.length)
+    result.set(encoded, 4)
+    return result;
+}
 
-    let counter = 0
+function decodeString(bytes: Uint8Array): { value: string, bytesTraversed: number } {
+    let decoder = new TextDecoder("utf-8")
+    let dataView = new DataView(bytes.buffer)
 
-    let avatarBuf = encoder.encode(player.avatarUrl)
-    view.setUint32(counter, avatarBuf.length)
-    counter += 4
-
-    let colorBuf = encoder.encode(player.color)
-    view.setUint32(counter, colorBuf.length)
-    counter += 4
-
-    let displayNameBuf = encoder.encode(player.displayName)
-    view.setUint32(counter, displayNameBuf.length)
-    counter += 4
-
-    let idBuf = encoder.encode(player.id)
-    view.setUint32(counter, idBuf.length)
-    counter += 4
-
-    let usernameBuf = encoder.encode(player.username)
-    view.setUint32(counter, usernameBuf.length)
-    counter += 4
-
-    let merged = new Uint8Array(
-        20 + avatarBuf.length + colorBuf.length + displayNameBuf.length + idBuf.length + usernameBuf.length
-    )
-
-    let mergedView = new DataView(merged.buffer)
-
-    counter = 0
-
-    mergedView.setUint32(counter, avatarBuf.length)
-    counter += 4
-
-    merged.set(avatarBuf, counter)
-    counter += avatarBuf.length
-
-    mergedView.setUint32(counter, colorBuf.length)
-    counter += 4
-
-    merged.set(colorBuf, counter)
-    counter += colorBuf.length
-
-    mergedView.setUint32(counter, displayNameBuf.length)
-    counter += 4
-
-    merged.set(displayNameBuf, counter)
-    counter += displayNameBuf.length
-
-    mergedView.setUint32(counter, idBuf.length)
-    counter += 4
-
-    merged.set(idBuf, counter)
-    counter += idBuf.length
-
-    mergedView.setUint32(counter, usernameBuf.length)
-    counter += 4
-
-    merged.set(usernameBuf, counter)
-    counter += usernameBuf.length
-
-    return merged
+    let length = dataView.getUint32(0)
+    let decoded = decoder.decode(bytes.subarray(4, length + 4))
+    return {
+        value: decoded,
+        bytesTraversed: length
+    }
 }
 
 // ENCODING:
@@ -291,14 +199,14 @@ function playerToBinary(player: Player): Uint8Array {
 // u64 serverTimestamp;
 // ]
 function playerStateToBinary(state: PlayerSnapshot): Uint8Array {
-    let playerBinary = playerToBinary(state.player)
+    let uuidBinary = encodeString(state.uuid)
 
     let merged = new Uint8Array(
-        1 + playerBinary.length + 40
+        1 + uuidBinary.length + 40
     )
     merged[0] = Number(state.isLeader)
-    merged.set(playerBinary, 1)
-    let counter = 1 + playerBinary.length
+    merged.set(uuidBinary, 1)
+    let counter = 1 + uuidBinary.length
 
     let view = new DataView(merged.buffer)
 
@@ -330,8 +238,8 @@ function composeUpdateMessageToServer(state: PlayerSnapshot): Uint8Array {
     return merged
 }
 
-function composeNewConnectionMessage(player: Player): Uint8Array {
-    let playerEncoded: Uint8Array = playerToBinary(player)
+function composeNewConnectionMessage(uuid: string): Uint8Array {
+    let playerEncoded: Uint8Array = encodeString(uuid)
     let merged = new Uint8Array(playerEncoded.length + 1)
 
     merged[0] = 0
@@ -352,7 +260,8 @@ export {
     TileType,
     gameStateFromBinary,
     composeUpdateMessageToServer,
-    playerToBinary,
-    composeNewConnectionMessage
+    composeNewConnectionMessage,
+    encodeString,
+    decodeString
 }
 
