@@ -26,8 +26,8 @@ type WebsocketHandler struct {
 
 type Connection struct {
 	address     string
-	_connection *websocket.Conn
 	uuid        string
+	_connection *websocket.Conn
 	_lock       *sync.RWMutex
 }
 
@@ -147,7 +147,6 @@ func (wsh WebsocketHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	connection := new(Connection)
 	connection.address = conn.RemoteAddr().String()
 	connection._lock = new(sync.RWMutex)
-	// Direct access only for assignment
 	connection._connection = conn
 
 	activeConnections = append(activeConnections, connection)
@@ -189,7 +188,6 @@ func (wsh WebsocketHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 }
 
 // Global variables
-
 var gameState *types.GameState = new(types.GameState)
 var activeConnections []*Connection
 
