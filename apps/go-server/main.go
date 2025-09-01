@@ -11,6 +11,9 @@ import (
 	"time"
 
 	"github.com/gorilla/websocket"
+
+	"go-server/generation"
+	"go-server/types"
 )
 
 const ClientNewConnectionMessage uint8 = 0
@@ -43,21 +46,21 @@ func HandleBinaryMessage(p []byte, address string) error {
 		// ENCODING:
 		// bytes[0:1] = message type
 		// bytes[1:] = Player object
-		player, _ := PlayerFromBinary(p[1:])
+		player, _ := types.PlayerFromBinary(p[1:])
 
 		log.Print("Parsed player")
 		log.Print(player)
-		gameState.playerStates = append(gameState.playerStates, PlayerSnapshot{
-			player:              player,
-			position:            Vector2[float64]{1.8, 1.8},
-			velocity:            Vector2[float64]{0, 0},
-			isLeader:            false,
-			snapshotTimestampMs: uint64(time.Now().UnixMilli()),
+		gameState.PlayerStates = append(gameState.PlayerStates, types.PlayerSnapshot{
+			Player:              player,
+			Position:            types.Vector2[float64]{X: 1.8, Y: 1.8},
+			Velocity:            types.Vector2[float64]{X: 0, Y: 0},
+			IsLeader:            false,
+			SnapshotTimestampMs: uint64(time.Now().UnixMilli()),
 		})
 		c := 0
 		for _, connection := range activeConnections {
 			if connection.address == address {
-				connection.uuid = player.id
+				connection.uuid = player.Id
 			}
 			message := gameState.ToBinary()
 			connection.WriteMessage(websocket.BinaryMessage, message)
@@ -75,15 +78,15 @@ func HandleBinaryMessage(p []byte, address string) error {
 		// bytes[0:1] = message type
 		// bytes[1:] = playerSnapshot,
 
-		newPlayerSnapshot, err := PlayerSnapshotFromBinary(p[1:])
+		newPlayerSnapshot, err := types.PlayerSnapshotFromBinary(p[1:])
 		if err != nil {
 			log.Print("Could not parse player snapshot from message. " + err.Error())
 			return err
 		}
 
-		for i, playerSnapshotItem := range gameState.playerStates {
-			if strings.Trim(playerSnapshotItem.player.id, "\n") == strings.Trim(newPlayerSnapshot.player.id, "\n") {
-				gameState.playerStates[i] = newPlayerSnapshot
+		for i, playerSnapshotItem := range gameState.PlayerStates {
+			if strings.Trim(playerSnapshotItem.Player.Id, "\n") == strings.Trim(newPlayerSnapshot.Player.Id, "\n") {
+				gameState.PlayerStates[i] = newPlayerSnapshot
 				break
 			}
 		}
@@ -127,10 +130,10 @@ func (wsh WebsocketHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 				// Removes item i
 				activeConnections = append(activeConnections[:i], activeConnections[i+1:]...)
 			}
-			for j, player := range gameState.playerStates {
-				if player.player.id == connection.uuid {
+			for j, player := range gameState.PlayerStates {
+				if player.Player.Id == connection.uuid {
 					// Removes item j
-					gameState.playerStates = append(gameState.playerStates[:j], gameState.playerStates[j+1:]...)
+					gameState.PlayerStates = append(gameState.PlayerStates[:j], gameState.PlayerStates[j+1:]...)
 				}
 			}
 		}
@@ -187,104 +190,11 @@ func (wsh WebsocketHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 // Global variables
 
-var gameState *GameState = new(GameState)
+var gameState *types.GameState = new(types.GameState)
 var activeConnections []*Connection
 
 func main() {
-	gameState.mapLayout.width = 32
-	gameState.mapLayout.height = 90
-	gameState.mapLayout.tiles = append(gameState.mapLayout.tiles,
-		0b1111_1111, 0b1111_1111, 0b1111_1111, 0b1111_1111,
-		0b1000_0000, 0b0000_0001, 0b1000_0001, 0b1000_0001,
-		0b1000_0001, 0b1000_0000, 0b0000_0000, 0b0000_0001,
-		0b1000_0000, 0b0000_0001, 0b1000_0001, 0b1000_0001,
-		0b1000_0000, 0b0110_0001, 0b1000_0001, 0b1000_0001,
-		0b1000_0110, 0b0000_0001, 0b1000_0000, 0b0000_0001,
-		0b1111_0011, 0b1111_0011, 0b1111_1111, 0b1111_1001,
-		0b1000_0000, 0b0000_0001, 0b1000_0001, 0b1000_0001,
-		0b1000_0000, 0b0110_0001, 0b1000_0001, 0b1000_0001,
-		0b1000_0110, 0b0000_0001, 0b1000_0000, 0b0000_0001,
-		0b1111_0011, 0b1111_1111, 0b1111_1111, 0b1111_1111,
-		0b1000_0000, 0b0000_0001, 0b1000_0001, 0b1000_0001,
-		0b1000_0001, 0b1000_0000, 0b0000_0000, 0b0000_0001,
-		0b1000_0000, 0b0000_0001, 0b1000_0001, 0b1000_0001,
-		0b1000_0000, 0b0110_0001, 0b1000_0001, 0b1000_0001,
-		0b1000_0110, 0b0000_0001, 0b1000_0000, 0b0000_0001,
-		0b1111_0011, 0b1001_0011, 0b1111_1111, 0b1111_1001,
-		0b1000_0000, 0b0000_0001, 0b1000_0001, 0b1000_0001,
-		0b1000_0000, 0b0110_0001, 0b1000_0001, 0b1000_0001,
-		0b1000_0110, 0b0000_0001, 0b1000_0000, 0b0000_0001,
-		0b1111_1111, 0b1001_1111, 0b1111_1111, 0b1111_1111,
-		0b1000_0000, 0b0000_0001, 0b1000_0001, 0b1000_0001,
-		0b1000_0001, 0b1000_0000, 0b0000_0000, 0b0000_0001,
-		0b1000_0000, 0b0000_0001, 0b1000_0001, 0b1000_0001,
-		0b1000_0000, 0b0110_0001, 0b1000_0001, 0b1000_0001,
-		0b1000_0110, 0b0000_0001, 0b1000_0000, 0b0000_0001,
-		0b1111_0011, 0b1111_0011, 0b1111_1111, 0b1111_1001,
-		0b1000_0000, 0b0000_0001, 0b1000_0001, 0b1000_0001,
-		0b1000_0000, 0b0110_0001, 0b1000_0001, 0b1000_0001,
-		0b1000_0110, 0b0000_0001, 0b1000_0000, 0b0000_0001,
-		0b1111_1111, 0b1111_0001, 0b1111_1111, 0b1111_1111,
-		0b1000_0000, 0b0000_0001, 0b1000_0001, 0b1000_0001,
-		0b1000_0001, 0b1000_0000, 0b0000_0000, 0b0000_0001,
-		0b1000_0000, 0b0000_0001, 0b1000_0001, 0b1000_0001,
-		0b1000_0000, 0b0110_0001, 0b1000_0001, 0b1000_0001,
-		0b1000_0110, 0b0000_0001, 0b1000_0000, 0b0000_0001,
-		0b1111_0011, 0b1111_0011, 0b1111_1111, 0b1111_1001,
-		0b1000_0000, 0b0000_0001, 0b1000_0001, 0b1000_0001,
-		0b1000_0000, 0b0110_0001, 0b1000_0001, 0b1000_0001,
-		0b1000_0110, 0b0000_0001, 0b1000_0000, 0b0000_0001,
-		0b1111_0011, 0b1001_1111, 0b1111_1111, 0b1111_1111,
-		0b1000_0000, 0b0000_0001, 0b1000_0001, 0b1000_0001,
-		0b1000_0001, 0b1000_0000, 0b0000_0000, 0b0000_0001,
-		0b1000_0000, 0b0000_0001, 0b1000_0001, 0b1000_0001,
-		0b1000_0000, 0b0110_0001, 0b1000_0001, 0b1000_0001,
-		0b1000_0110, 0b0000_0001, 0b1000_0000, 0b0000_0001,
-		0b1111_0011, 0b1111_0011, 0b1111_1111, 0b1111_1001,
-		0b1000_0000, 0b0000_0001, 0b1000_0001, 0b1000_0001,
-		0b1000_0000, 0b0110_0001, 0b1000_0001, 0b1000_0001,
-		0b1000_0110, 0b0000_0001, 0b1000_0000, 0b0000_0001,
-		0b1111_0011, 0b1111_1111, 0b1111_1111, 0b1111_0001,
-		0b1000_0000, 0b0000_0001, 0b1000_0001, 0b1000_0001,
-		0b1000_0001, 0b1000_0000, 0b0000_0000, 0b0000_0001,
-		0b1000_0000, 0b0000_0001, 0b1000_0001, 0b1000_0001,
-		0b1000_0000, 0b0110_0001, 0b1000_0001, 0b1000_0001,
-		0b1000_0110, 0b0000_0001, 0b1000_0000, 0b0000_0001,
-		0b1111_0011, 0b1001_0011, 0b1111_0011, 0b1111_1001,
-		0b1000_0000, 0b0000_0001, 0b1000_0001, 0b1000_0001,
-		0b1000_0000, 0b0110_0001, 0b1000_0001, 0b1000_0001,
-		0b1000_0110, 0b0000_0001, 0b1000_0000, 0b0000_0001,
-		0b1111_0011, 0b1001_0011, 0b1111_0011, 0b1111_1001,
-		0b1000_0000, 0b0000_0001, 0b1000_0001, 0b1000_0001,
-		0b1000_0001, 0b1000_0000, 0b0000_0000, 0b0000_0001,
-		0b1000_0000, 0b0000_0001, 0b1000_0001, 0b1000_0001,
-		0b1000_0000, 0b0110_0001, 0b1000_0001, 0b1000_0001,
-		0b1000_0110, 0b0000_0001, 0b1000_0000, 0b0000_0001,
-		0b1111_0011, 0b1111_0011, 0b1111_1111, 0b1111_1001,
-		0b1000_0000, 0b0000_0001, 0b1000_0001, 0b1000_0001,
-		0b1000_0000, 0b0110_0001, 0b1000_0001, 0b1000_0001,
-		0b1000_0110, 0b0000_0001, 0b1000_0000, 0b0000_0001,
-		0b1111_0011, 0b1001_0011, 0b1111_0011, 0b1111_1001,
-		0b1000_0000, 0b0000_0001, 0b1000_0001, 0b1000_0001,
-		0b1000_0001, 0b1000_0000, 0b0000_0000, 0b0000_0001,
-		0b1000_0000, 0b0000_0001, 0b1000_0001, 0b1000_0001,
-		0b1000_0000, 0b0110_0001, 0b1000_0001, 0b1000_0001,
-		0b1000_0110, 0b0000_0001, 0b1000_0000, 0b0000_0001,
-		0b1111_0011, 0b1111_0011, 0b1111_1111, 0b1111_1001,
-		0b1000_0000, 0b0000_0001, 0b1000_0001, 0b1000_0001,
-		0b1000_0000, 0b0110_0001, 0b1000_0001, 0b1000_0001,
-		0b1000_0110, 0b0000_0001, 0b1000_0000, 0b0000_0001,
-		0b1111_0011, 0b1001_0011, 0b1111_0011, 0b1111_1001,
-		0b1000_0000, 0b0000_0001, 0b1000_0001, 0b1000_0001,
-		0b1000_0001, 0b1000_0000, 0b0000_0000, 0b0000_0001,
-		0b1000_0000, 0b0000_0001, 0b1000_0001, 0b1000_0001,
-		0b1000_0000, 0b0110_0001, 0b1000_0001, 0b1000_0001,
-		0b1000_0110, 0b0000_0001, 0b1000_0000, 0b0000_0001,
-		0b1111_0011, 0b1111_0011, 0b1111_1111, 0b1111_1001,
-		0b1000_0000, 0b0000_0001, 0b1000_0001, 0b1000_0001,
-		0b1000_0000, 0b0110_0001, 0b1000_0001, 0b1000_0001,
-		0b1111_1111, 0b1111_1111, 0b1111_1111, 0b1111_1111,
-	)
+	gameState.MapLayout = generation.GenerateMap()
 
 	webSocketHandler := WebsocketHandler{
 		upgrader: websocket.Upgrader{

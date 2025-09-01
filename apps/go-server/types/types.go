@@ -1,4 +1,4 @@
-package main
+package types
 
 import (
 	"encoding/binary"
@@ -8,35 +8,35 @@ import (
 )
 
 type Player struct {
-	id          string
-	username    string
-	displayName string
-	avatarUrl   string
-	color       string
+	Id          string
+	Username    string
+	DisplayName string
+	AvatarUrl   string
+	Color       string
 }
 
 type PlayerSnapshot struct {
-	isLeader            bool
-	player              Player
-	position            Vector2[float64]
-	velocity            Vector2[float64]
-	snapshotTimestampMs uint64
+	IsLeader            bool
+	Player              Player
+	Position            Vector2[float64]
+	Velocity            Vector2[float64]
+	SnapshotTimestampMs uint64
 }
 
 type MapLayout struct {
-	width  uint32
-	height uint32
-	tiles  []byte
+	Width  uint32
+	Height uint32
+	Tiles  []byte
 }
 
 type GameState struct {
-	playerStates []PlayerSnapshot
-	mapLayout    MapLayout
+	PlayerStates []PlayerSnapshot
+	MapLayout    MapLayout
 }
 
 type Vector2[T any] struct {
-	x T
-	y T
+	X T
+	Y T
 }
 
 // ENCODING:
@@ -48,10 +48,10 @@ type Vector2[T any] struct {
 func (layout MapLayout) ToBinary() []byte {
 	buffer := []byte{}
 
-	buffer = binary.BigEndian.AppendUint32(buffer, layout.width)
-	buffer = binary.BigEndian.AppendUint32(buffer, layout.height)
+	buffer = binary.BigEndian.AppendUint32(buffer, layout.Width)
+	buffer = binary.BigEndian.AppendUint32(buffer, layout.Height)
 
-	buffer = append(buffer, layout.tiles...)
+	buffer = append(buffer, layout.Tiles...)
 
 	return buffer
 }
@@ -65,19 +65,19 @@ func (layout MapLayout) ToBinary() []byte {
 // u32 usernameLength; 		string utf8 username;
 // ]
 func (player Player) ToBinary() []byte {
-	avatarBytes := []byte(player.avatarUrl)
+	avatarBytes := []byte(player.AvatarUrl)
 	avatarBytesLength := uint32(len(avatarBytes))
 
-	colorBytes := []byte(player.color)
+	colorBytes := []byte(player.Color)
 	colorBytesLength := uint32(len(colorBytes))
 
-	displayNameBytes := []byte(player.displayName)
+	displayNameBytes := []byte(player.DisplayName)
 	displayNameBytesLength := uint32(len(displayNameBytes))
 
-	idBytes := []byte(player.id)
+	idBytes := []byte(player.Id)
 	idBytesLength := uint32(len(idBytes))
 
-	usernameBytes := []byte(player.username)
+	usernameBytes := []byte(player.Username)
 	usernameBytesLength := uint32(len(usernameBytes))
 
 	buffer := []byte{}
@@ -137,11 +137,11 @@ func PlayerFromBinary(p []byte) (Player, uint32) {
 	counter += usernameLength
 
 	return Player{
-		avatarUrl:   avatar,
-		color:       color,
-		displayName: displayName,
-		id:          id,
-		username:    username,
+		AvatarUrl:   avatar,
+		Color:       color,
+		DisplayName: displayName,
+		Id:          id,
+		Username:    username,
 	}, counter
 }
 
@@ -156,19 +156,19 @@ func PlayerFromBinary(p []byte) (Player, uint32) {
 func (playerSnapshot PlayerSnapshot) ToBinary() []byte {
 
 	var isLeaderByte byte
-	if playerSnapshot.isLeader {
+	if playerSnapshot.IsLeader {
 		isLeaderByte = 1
 	} else {
 		isLeaderByte = 0
 	}
 
-	playerBytes := playerSnapshot.player.ToBinary()
+	playerBytes := playerSnapshot.Player.ToBinary()
 
-	positionXBytes := math.Float64bits(playerSnapshot.position.x)
-	positionYBytes := math.Float64bits(playerSnapshot.position.y)
+	positionXBytes := math.Float64bits(playerSnapshot.Position.X)
+	positionYBytes := math.Float64bits(playerSnapshot.Position.Y)
 
-	velocityXBytes := math.Float64bits(playerSnapshot.velocity.x)
-	velocityYBytes := math.Float64bits(playerSnapshot.velocity.y)
+	velocityXBytes := math.Float64bits(playerSnapshot.Velocity.X)
+	velocityYBytes := math.Float64bits(playerSnapshot.Velocity.Y)
 
 	buffer := []byte{}
 
@@ -181,7 +181,7 @@ func (playerSnapshot PlayerSnapshot) ToBinary() []byte {
 	buffer = binary.BigEndian.AppendUint64(buffer, velocityXBytes)
 	buffer = binary.BigEndian.AppendUint64(buffer, velocityYBytes)
 
-	buffer = binary.BigEndian.AppendUint64(buffer, playerSnapshot.snapshotTimestampMs)
+	buffer = binary.BigEndian.AppendUint64(buffer, playerSnapshot.SnapshotTimestampMs)
 
 	return buffer
 }
@@ -218,11 +218,11 @@ func PlayerSnapshotFromBinary(p []byte) (PlayerSnapshot, error) {
 	counter += 8
 
 	return PlayerSnapshot{
-		isLeader:            isLeader,
-		player:              player,
-		position:            Vector2[float64]{posX, posY},
-		velocity:            Vector2[float64]{velX, velY},
-		snapshotTimestampMs: timestamp,
+		IsLeader:            isLeader,
+		Player:              player,
+		Position:            Vector2[float64]{posX, posY},
+		Velocity:            Vector2[float64]{velX, velY},
+		SnapshotTimestampMs: timestamp,
 	}, nil
 }
 
@@ -234,14 +234,14 @@ func PlayerSnapshotFromBinary(p []byte) (PlayerSnapshot, error) {
 func (gameState GameState) ToBinary() []byte {
 
 	buffer := []byte{}
-	var numPlayers uint32 = uint32(len(gameState.playerStates))
+	var numPlayers uint32 = uint32(len(gameState.PlayerStates))
 	buffer = binary.BigEndian.AppendUint32(buffer, numPlayers)
 
-	for _, playerState := range gameState.playerStates {
+	for _, playerState := range gameState.PlayerStates {
 		buffer = append(buffer, playerState.ToBinary()...)
 	}
 
-	buffer = append(buffer, gameState.mapLayout.ToBinary()...)
+	buffer = append(buffer, gameState.MapLayout.ToBinary()...)
 
 	return buffer
 }
