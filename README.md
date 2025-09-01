@@ -1,6 +1,6 @@
 # (WIP) blind-maze
 
-Full stack web game TurboRepo project.
+Full stack web game, organized as a TurboRepo. Project is mainly meant to be a learning experience.
 
 ## Main Components
 
@@ -33,6 +33,6 @@ Full stack web game TurboRepo project.
 
 Clone repo, install dependencies by running `pnpm install` in the project root.
 
-**Frontend**: Run `turbo dev` to spin up frontend.
+**Frontend + Client**: Run `turbo dev` to spin up frontend.
 
 **Server**: Run `go run .` in `apps/go-server`
