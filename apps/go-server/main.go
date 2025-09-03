@@ -25,6 +25,7 @@ import (
 
 const ClientNewConnectionMessage uint8 = 0
 const ClientUpdateRequestMessage uint8 = 1
+const ClientReleaseParticleMessage uint8 = 2
 
 // Types
 type WebsocketHandler struct {
@@ -101,7 +102,11 @@ func HandleBinaryMessage(p []byte, address string) error {
 			message := gameState.ToBinary()
 			connection.WriteMessage(websocket.BinaryMessage, message)
 		}
-
+	case ClientReleaseParticleMessage:
+		log.Print("Received particle released message.")
+		particle := types.ParticleFromBinary(p[1:])
+		log.Print(particle)
+		gameState.Particles = append(gameState.Particles, particle)
 	default:
 		return errors.New("unknown request type received")
 	}
@@ -198,6 +203,21 @@ func (wsh WebsocketHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 var gameState *types.GameState = new(types.GameState)
 var activeConnections []*Connection
 
+func startGlobalTickCycle() {
+	startTimeMs := time.Now().UnixMilli()
+	updates := int64(0)
+	TICK_RATE := int64(60)
+
+	for {
+		for time.Now().UnixMilli()-startTimeMs/TICK_RATE > updates {
+			gameState.Tick(1000.0 / float64(TICK_RATE))
+			updates++
+		}
+
+	}
+
+}
+
 func main() {
 	gameState.MapLayout = generation.GenerateMap()
 
@@ -206,6 +226,8 @@ func main() {
 			CheckOrigin: CheckOrigin,
 		},
 	}
+
+	go startGlobalTickCycle()
 
 	http.Handle("/", webSocketHandler)
 	log.Println("Started server")

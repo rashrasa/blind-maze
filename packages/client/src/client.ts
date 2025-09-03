@@ -2,7 +2,8 @@ import {
     TileType,
     gameStateFromBinary,
     composeUpdateMessageToServer,
-    composeNewConnectionMessage
+    composeNewConnectionMessage,
+    composeParticleReleasedMessage
 } from "@blind-maze/types";
 
 import type {
@@ -11,7 +12,7 @@ import type {
     PlayerSnapshot,
 } from "@blind-maze/types";
 
-import { DefaultRenderer, PLAYER_SPEED, PLAYER_SQUARE_LENGTH_TILES, Renderer } from "./core/renderer.js"
+import { DefaultRenderer, PARTICLE_INITIAL_VELOCITY, PARTICLE_LIFETIME_MS, PLAYER_SPEED, PLAYER_SQUARE_LENGTH_TILES, Renderer } from "./core/renderer.js"
 import { DefaultInputHandler, InputHandler } from "./core/inputs.js"
 
 import WebSocketAsPromised from "websocket-as-promised";
@@ -68,6 +69,39 @@ export class GameClient {
             else {
                 console.warn("Received input before receiving initial game state. Ignoring..")
             }
+        })
+
+        let canvas = this.renderer.getMainCanvas();
+
+        this.inputHandler.addMouseEventHandler((ev)=>{
+            if (this.lastThisPlayerSnapshot == null){
+                console.warn("Received mouse event before receiving initial player snapshot. Ignoring")
+                return
+            }
+            let posX = this.lastThisPlayerSnapshot!.position.x
+            let posY = this.lastThisPlayerSnapshot!.position.y
+
+            let playerRelativeClickX = ev.clientX - canvas.clientLeft - canvas.clientWidth / 2.0
+            let playerRelativeClickY = ev.clientY - canvas.clientTop - canvas.clientHeight / 2.0
+
+            let angle = Math.atan(playerRelativeClickY / playerRelativeClickX)
+
+            let velX = PARTICLE_INITIAL_VELOCITY * Math.cos(angle)
+            let velY = PARTICLE_INITIAL_VELOCITY * Math.sin(angle)
+
+            let message = composeParticleReleasedMessage({
+                position: {
+                    x: posX,
+                    y:posY,
+                },
+                velocity: {
+                    x: velX,
+                    y: velY
+                },
+                timeLeftMs: PARTICLE_LIFETIME_MS
+            })
+
+            this.webSocketConnection!.send(message)
         })
 
         this.thisPlayer = player;

@@ -4,6 +4,8 @@ export interface InputHandler {
     handleInputState(): unknown;
     addInputStateHandler(handler: (state: Map<string, boolean>) => void): void
     removeInputStateHandler(handler: (state: Map<string, boolean>) => void): void
+    addMouseEventHandler(handler: (ev: MouseEvent) => void): void
+    removeMouseEventHandler(handler: (ev: MouseEvent) => void): void
     dispose(): void
 }
 
@@ -30,6 +32,13 @@ export class DefaultInputHandler implements InputHandler {
     }
     removeInputStateHandler(handler: (state: Map<string, boolean>) => void): void {
         this.inputListeners.splice(this.inputListeners.findIndex((value) => value == handler), 1)
+    }
+
+    addMouseEventHandler(handler: (ev: MouseEvent) => void): void {
+        this.window.addEventListener("click", handler)
+    }
+    removeMouseEventHandler(handler: (ev: MouseEvent) => void): void {
+        this.window.removeEventListener("click", handler)
     }
 
     private handleKeyUp(event: KeyboardEvent) {

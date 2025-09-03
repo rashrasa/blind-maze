@@ -4,7 +4,10 @@ export const PIXELS_PER_TILE = 50
 
 // Should be moved to global constants
 export const PLAYER_SQUARE_LENGTH_TILES = .5
+export const PARTICLE_SQUARE_LENGTH_TILES = 0.1
 export const PLAYER_SPEED = 5
+export const PARTICLE_INITIAL_VELOCITY = 10
+export const PARTICLE_LIFETIME_MS = 10000
 
 export interface Renderer {
     isClientVisible(): boolean,
@@ -121,6 +124,21 @@ export class DefaultRenderer implements Renderer {
                 0,
                 2 * Math.PI
             )
+            context.closePath()
+            context.fill()
+        }
+
+        context.strokeStyle = "yellow"
+        for (const particle of state.particles){
+            context.beginPath()
+            context.arc(
+                this.viewPortWidthPx / 2 + (-centerX + particle.position.x) * PIXELS_PER_TILE,
+                this.viewPortHeightPx / 2 + (-centerY + particle.position.y) * PIXELS_PER_TILE,
+                PARTICLE_SQUARE_LENGTH_TILES * PIXELS_PER_TILE / 2,
+                0,
+                2 * Math.PI
+            )
+            context.closePath()
             context.fill()
         }
 
