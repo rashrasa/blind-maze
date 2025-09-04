@@ -5,6 +5,7 @@ import (
 	"log"
 	"math"
 	"runtime"
+	"sync"
 	"time"
 )
 
@@ -20,6 +21,7 @@ type Particle struct {
 	Position   Vector2[float64]
 	Velocity   Vector2[float64]
 	TimeLeftMs float64
+	_writeLock sync.RWMutex
 }
 
 type MapLayout struct {
@@ -29,8 +31,8 @@ type MapLayout struct {
 }
 
 type GameState struct {
-	PlayerStates []PlayerSnapshot
-	Particles    []Particle
+	PlayerStates []*PlayerSnapshot
+	Particles    []*Particle
 	MapLayout    MapLayout
 }
 
@@ -239,7 +241,7 @@ func (player *PlayerSnapshot) Tick(durationMs float64) {
 }
 
 func (particle *Particle) Tick(durationMs float64) {
-	particle.Position.X = particle.Position.X + particle.Velocity.X*durationMs/1000.0
-	particle.Position.Y = particle.Position.Y + particle.Velocity.Y*durationMs/1000.0
+	particle.Position.X += particle.Velocity.X * durationMs / 1000.0
+	particle.Position.Y += particle.Velocity.Y * durationMs / 1000.0
 	particle.TimeLeftMs -= durationMs
 }

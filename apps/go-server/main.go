@@ -58,7 +58,7 @@ func HandleBinaryMessage(p []byte, address string) error {
 
 		log.Print("Parsed player")
 		log.Print(uuid)
-		gameState.PlayerStates = append(gameState.PlayerStates, types.PlayerSnapshot{
+		gameState.PlayerStates = append(gameState.PlayerStates, &types.PlayerSnapshot{
 			Uuid:                uuid,
 			Position:            types.Vector2[float64]{X: 1.8, Y: 1.8},
 			Velocity:            types.Vector2[float64]{X: 0, Y: 0},
@@ -94,7 +94,7 @@ func HandleBinaryMessage(p []byte, address string) error {
 
 		for i, playerSnapshotItem := range gameState.PlayerStates {
 			if strings.Trim(playerSnapshotItem.Uuid, "\n") == strings.Trim(newPlayerSnapshot.Uuid, "\n") {
-				gameState.PlayerStates[i] = newPlayerSnapshot
+				gameState.PlayerStates[i] = &newPlayerSnapshot
 				break
 			}
 		}
@@ -106,7 +106,7 @@ func HandleBinaryMessage(p []byte, address string) error {
 		log.Print("Received particle released message.")
 		particle := types.ParticleFromBinary(p[1:])
 		log.Print(particle)
-		gameState.Particles = append(gameState.Particles, particle)
+		gameState.Particles = append(gameState.Particles, &particle)
 	default:
 		return errors.New("unknown request type received")
 	}
@@ -188,20 +188,22 @@ func (wsh WebsocketHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 				return
 			}
 
-			for _, connection := range activeConnections {
-				connection.WriteMessage(websocket.BinaryMessage, gameState.ToBinary())
-			}
-
 		case websocket.TextMessage:
 			log.Print("Received message in string format: " + string(bytes))
 		}
-
+		go updateAllClients()
 	}
 }
 
 // Global variables
 var gameState *types.GameState = new(types.GameState)
 var activeConnections []*Connection
+
+func updateAllClients() {
+	for _, connection := range activeConnections {
+		connection.WriteMessage(websocket.BinaryMessage, gameState.ToBinary())
+	}
+}
 
 func startGlobalTickCycle() {
 	startTimeMs := time.Now().UnixMilli()
@@ -212,8 +214,12 @@ func startGlobalTickCycle() {
 		for (time.Now().UnixMilli()-startTimeMs)/TICK_RATE > updates {
 			gameState.Tick(1000.0 / float64(TICK_RATE))
 			updates++
+			if updates%60 == 0 {
+				log.Print("Ticked " + fmt.Sprint(updates) + " times")
+				log.Print(gameState.Particles)
+			}
+			updateAllClients()
 		}
-
 	}
 
 }
