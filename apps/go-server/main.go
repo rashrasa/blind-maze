@@ -103,9 +103,7 @@ func HandleBinaryMessage(p []byte, address string) error {
 			connection.WriteMessage(websocket.BinaryMessage, message)
 		}
 	case ClientReleaseParticleMessage:
-		log.Print("Received particle released message.")
 		particle := types.ParticleFromBinary(p[1:])
-		log.Print(particle)
 		gameState.Particles = append(gameState.Particles, &particle)
 	default:
 		return errors.New("unknown request type received")
