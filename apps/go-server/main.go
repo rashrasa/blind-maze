@@ -209,7 +209,7 @@ func startGlobalTickCycle() {
 	TICK_RATE := int64(60)
 
 	for {
-		for time.Now().UnixMilli()-startTimeMs/TICK_RATE > updates {
+		for (time.Now().UnixMilli()-startTimeMs)/TICK_RATE > updates {
 			gameState.Tick(1000.0 / float64(TICK_RATE))
 			updates++
 		}
