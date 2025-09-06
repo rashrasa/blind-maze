@@ -206,10 +206,10 @@ func updateAllClients() {
 func startGlobalTickCycle() {
 	startTimeMs := time.Now().UnixMilli()
 	updates := int64(0)
-	TICK_RATE := int64(60)
+	TICK_RATE := int64(240)
 
 	for {
-		for (time.Now().UnixMilli()-startTimeMs)/TICK_RATE > updates {
+		for (float64(time.Now().UnixMilli()-startTimeMs))/(float64(1000.0/TICK_RATE)) > float64(updates) {
 			gameState.Tick(1000.0 / float64(TICK_RATE))
 			updates++
 			if updates%60 == 0 {
