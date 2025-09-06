@@ -1,11 +1,14 @@
 package types
 
-import "encoding/binary"
+import (
+	"bytes"
+	"encoding/binary"
+)
 
 type MapLayout struct {
 	Width  uint32
 	Height uint32
-	Tiles  []byte
+	Tiles  [][]byte
 }
 
 // ENCODING:
@@ -20,7 +23,7 @@ func (layout *MapLayout) ToBinary() []byte {
 	buffer = binary.BigEndian.AppendUint32(buffer, layout.Width)
 	buffer = binary.BigEndian.AppendUint32(buffer, layout.Height)
 
-	buffer = append(buffer, layout.Tiles...)
+	buffer = append(buffer, bytes.Join(layout.Tiles, []byte{})...)
 
 	return buffer
 }
