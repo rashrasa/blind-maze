@@ -2,6 +2,8 @@ package types
 
 import (
 	"encoding/binary"
+	"math"
+	"math/rand"
 )
 
 // TODO: remove and update temporary solution
@@ -54,8 +56,18 @@ func (state *GameState) Tick(durationMs float64) {
 		particleBottomY := centerY + PARTICLE_SQUARE_LENGTH_TILES/2.0
 		currentVX := particle.Velocity.X
 		currentVY := particle.Velocity.Y
-		newVX := particle.Velocity.X
-		newVY := particle.Velocity.Y
+
+		newVX := currentVX
+		newVY := currentVY
+
+		angle := math.Atan2(currentVY, currentVY)
+		speed := math.Sqrt(math.Pow(currentVX, 2) + math.Pow(currentVY, 2))
+		noise := rand.Float64()*math.Pi/12.0 - math.Pi/6.0
+
+		newAngle := angle + noise
+
+		collisionVX := -speed * math.Cos(newAngle)
+		collisionVY := -speed * math.Sin(newAngle)
 
 		// Check for particle collisions
 		// TODO: Reduce number of rows and columns being checked
@@ -69,25 +81,23 @@ func (state *GameState) Tick(durationMs float64) {
 						// Heading right
 						if currentVX > 0 {
 							if (particleRightX > float64(x) && particleRightX < float64(x)+1) && (centerY > float64(y) && centerY < float64(y)+1) {
-								newVX = -currentVX
+								newVX = collisionVX
 							}
 						} else if currentVX < 0 {
 							// Heading left
-
 							if (particleLeftX < float64(x)+1 && particleLeftX > float64(x)) && (centerY > float64(y) && centerY < float64(y)+1) {
-								newVX = -currentVX
+								newVX = collisionVX
 							}
 						}
-
 						// Heading down
 						if currentVY > 0 {
 							if (particleBottomY > float64(y) && particleBottomY < float64(y)+1) && (centerX > float64(x) && centerX < float64(x)+1) {
-								newVY = -currentVY
+								newVY = collisionVY
 							}
 						} else if currentVY < 0 {
 							// Heading up
 							if (particleTopY < float64(y)+1 && particleTopY > float64(y)) && (centerX > float64(x) && centerX < float64(x)+1) {
-								newVY = -currentVY
+								newVY = collisionVY
 							}
 						}
 

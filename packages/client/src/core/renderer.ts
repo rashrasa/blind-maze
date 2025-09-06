@@ -6,7 +6,7 @@ export const PIXELS_PER_TILE = 50
 export const PLAYER_SQUARE_LENGTH_TILES = .5
 export const PARTICLE_SQUARE_LENGTH_TILES = 0.2
 export const PLAYER_SPEED = 5
-export const PARTICLE_INITIAL_VELOCITY = 100
+export const PARTICLE_INITIAL_VELOCITY = 10
 export const PARTICLE_LIFETIME_MS = 10000
 export const CANVAS_ID = "home_main_game_canvas_id"
 
