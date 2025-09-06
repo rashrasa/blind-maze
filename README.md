@@ -1,6 +1,6 @@
 # (WIP) blind-maze
 
-Full stack web game, organized as a TurboRepo. Project is mainly meant to be a learning experience.
+Full stack web game, organized as a TurboRepo.
 
 ## Main Components
 
