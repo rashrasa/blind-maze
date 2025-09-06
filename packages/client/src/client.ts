@@ -42,6 +42,9 @@ export class GameClient {
         this.lastRenderMs = 0;
 
         this.inputHandler.addInputStateHandler((keysPressed) => {
+            if (keysPressed.get("Escape") == true) {
+                this.renderer.exitFullScreenMode()
+            }
             if (this.lastThisPlayerSnapshot != null) {
                 let newVelocity = {
                     x: 0,
@@ -73,8 +76,8 @@ export class GameClient {
 
         let canvas = this.renderer.getMainCanvas();
 
-        this.inputHandler.addMouseEventHandler((ev)=>{
-            if (this.lastThisPlayerSnapshot == null){
+        this.inputHandler.addMouseEventHandler((ev) => {
+            if (this.lastThisPlayerSnapshot == null) {
                 console.warn("Received mouse event before receiving initial player snapshot. Ignoring")
                 return
             }
@@ -92,7 +95,7 @@ export class GameClient {
             let message = composeParticleReleasedMessage({
                 position: {
                     x: posX,
-                    y:posY,
+                    y: posY,
                 },
                 velocity: {
                     x: velX,
@@ -110,6 +113,10 @@ export class GameClient {
         this.lastGameSnapshot = null;
         this.lastThisPlayerSnapshot = null;
         this.disposed = false
+    }
+
+    public requestFullScreenMode() {
+        this.renderer.requestFullscreenMode();
     }
 
     public attachPlayerIdentity(player: Player) {

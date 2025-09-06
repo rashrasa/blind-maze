@@ -7,7 +7,7 @@ export const PLAYER_SQUARE_LENGTH_TILES = .5
 export const PARTICLE_SQUARE_LENGTH_TILES = 0.1
 export const PLAYER_SPEED = 5
 export const PARTICLE_INITIAL_VELOCITY = 10
-export const PARTICLE_LIFETIME_MS = 10000
+export const PARTICLE_LIFETIME_MS = 1000
 
 export interface Renderer {
     isClientVisible(): boolean,
@@ -15,6 +15,9 @@ export interface Renderer {
     dispose(): void,
     render(state: GameSnapshot, centerX: number, centerY: number): void,
     attachPlayerIdentity(player: Player): void,
+    requestFullscreenMode(): void,
+    exitFullScreenMode(): void,
+    updateDimensions(width: number | null, height: number | null): void,
     setVisibility(visible: boolean): void
 }
 
@@ -22,16 +25,21 @@ export class DefaultRenderer implements Renderer {
     // Instance constants
     private readonly container: HTMLDivElement;
     private readonly canvas: HTMLCanvasElement;
-    private readonly viewPortWidthPx: number;
-    private readonly viewPortHeightPx: number;
     private readonly clientContainer: HTMLElement
+    private readonly originalViewPortWidthPx: number;
+    private readonly originalViewPortHeightPx: number;
 
     private playerIdentityMapping: Map<string, Player> = new Map<string, Player>();
+    private viewPortWidthPx: number;
+    private viewPortHeightPx: number;
     private isVisible = false;
+    private isMinimized = true;
     private disposed: boolean = false;
 
 
     constructor(clientContainer: HTMLElement, viewPortWidthPx: number, viewPortHeightPx: number) {
+        this.originalViewPortWidthPx = viewPortWidthPx
+        this.originalViewPortHeightPx = viewPortHeightPx
         this.container = document.createElement("div");
         this.container.className = `w-[${viewPortWidthPx}px] h-[${viewPortHeightPx}px]`
 
@@ -48,6 +56,38 @@ export class DefaultRenderer implements Renderer {
         this.container.appendChild(this.canvas);
         clientContainer.appendChild(this.container);
     }
+
+    updateDimensions(width: number | null, height: number | null) {
+        if (width) {
+            this.canvas.width = width
+        }
+        if (height) {
+            this.canvas.height = height
+        }
+        let previousWidth = this.viewPortWidthPx
+        let previousHeight = this.viewPortHeightPx
+
+        this.container.className = `w-[${width ?? previousWidth}px] h-[${height ?? previousHeight}px]`
+        this.viewPortWidthPx = width ?? previousWidth;
+        this.viewPortHeightPx = height ?? previousHeight;
+
+    }
+
+    requestFullscreenMode(): void {
+        this.updateDimensions(window.outerWidth, window.outerHeight)
+        this.isMinimized = false
+        this.canvas.requestFullscreen();
+    }
+
+    exitFullScreenMode(): void {
+        if (this.isMinimized == true) {
+            return;
+        }
+        this.updateDimensions(this.originalViewPortWidthPx, this.originalViewPortHeightPx)
+        this.isMinimized = true
+    }
+
+
     attachPlayerIdentity(player: Player): void {
         this.playerIdentityMapping.set(player.uuid, player)
     }
@@ -129,7 +169,7 @@ export class DefaultRenderer implements Renderer {
         }
 
         context.strokeStyle = "yellow"
-        for (const particle of state.particles){
+        for (const particle of state.particles) {
             context.beginPath()
             context.arc(
                 this.viewPortWidthPx / 2 + (-centerX + particle.position.x) * PIXELS_PER_TILE,

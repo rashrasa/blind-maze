@@ -135,7 +135,6 @@ function gameStateFromBinary(buffer: ArrayBufferLike): GameSnapshot {
             },
             snapshotTimestampMs: Number(snapshotTimestampMs)
         }
-        console.log(player)
 
         players.push(player)
     }
@@ -145,7 +144,6 @@ function gameStateFromBinary(buffer: ArrayBufferLike): GameSnapshot {
     let numParticles = bufferView.getUint32(counter)
     counter += 4
 
-    console.log(`Particles: ${numParticles}`)
 
     for (let i = 0; i < numParticles; i++) {
         let positionX = bufferView.getFloat64(counter)
@@ -153,18 +151,13 @@ function gameStateFromBinary(buffer: ArrayBufferLike): GameSnapshot {
         let positionY = bufferView.getFloat64(counter)
         counter += 8
 
-        console.log(`Position: (${positionX}, ${positionY})`)
-
         let velocityX = bufferView.getFloat64(counter)
         counter += 8
         let velocityY = bufferView.getFloat64(counter)
         counter += 8
 
-        console.log(`Velocity: (${velocityX}, ${velocityY})`)
-
         let timeLeftMs = bufferView.getFloat64(counter)
 
-        console.log(`Time Left: ${timeLeftMs}`)
         counter += 8
 
         particles.push({
@@ -179,14 +172,13 @@ function gameStateFromBinary(buffer: ArrayBufferLike): GameSnapshot {
             timeLeftMs: timeLeftMs
         })
     }
-    
+
 
     let mapWidth = bufferView.getUint32(counter)
     counter += 4
     let mapHeight = bufferView.getUint32(counter)
     counter += 4
 
-    console.log(`Map Size: (${mapWidth}, ${mapHeight}).`)
 
     let tiles: TileType[][] = []
     let mapBytesLength: number = Math.ceil((1.0 * mapWidth * mapHeight) / 8.0)
@@ -291,7 +283,7 @@ function playerStateToBinary(state: PlayerSnapshot): Uint8Array {
 }
 
 function composeParticleReleasedMessage(particle: Particle): Uint8Array {
-    let buffer = new ArrayBuffer(5*8 +1)
+    let buffer = new ArrayBuffer(5 * 8 + 1)
     let view = new DataView(buffer);
     let arrayView = new Uint8Array(buffer)
 
