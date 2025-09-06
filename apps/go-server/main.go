@@ -212,10 +212,6 @@ func startGlobalTickCycle() {
 		for (float64(time.Now().UnixMilli()-startTimeMs))/(float64(1000.0/TICK_RATE)) > float64(updates) {
 			gameState.Tick(1000.0 / float64(TICK_RATE))
 			updates++
-			if updates%60 == 0 {
-				log.Print("Ticked " + fmt.Sprint(updates) + " times")
-				log.Print(gameState.Particles)
-			}
 			updateAllClients()
 		}
 	}
