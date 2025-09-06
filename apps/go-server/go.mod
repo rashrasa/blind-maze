@@ -1,4 +1,4 @@
-module go-server
+module github.com/rashrasa/blind-maze/apps/go-server
 
 go 1.25.0
 

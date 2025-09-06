@@ -11,9 +11,8 @@ import (
 	"time"
 
 	"github.com/gorilla/websocket"
-
-	"go-server/generation"
-	"go-server/types"
+	"github.com/rashrasa/blind-maze/apps/go-server/generation"
+	"github.com/rashrasa/blind-maze/apps/go-server/types"
 )
 
 /*

@@ -1,8 +1,6 @@
 package generation
 
-import (
-	"go-server/types"
-)
+import "github.com/rashrasa/blind-maze/apps/go-server/types"
 
 // Public API
 func GenerateMap() types.MapLayout {
