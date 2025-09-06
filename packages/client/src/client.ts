@@ -74,20 +74,18 @@ export class GameClient {
             }
         })
 
-        let canvas = this.renderer.getMainCanvas();
-
         this.inputHandler.addMouseEventHandler((ev) => {
             if (this.lastThisPlayerSnapshot == null) {
                 console.warn("Received mouse event before receiving initial player snapshot. Ignoring")
                 return
             }
+            let dimensions = this.renderer.getDimensions();
             let posX = this.lastThisPlayerSnapshot!.position.x
             let posY = this.lastThisPlayerSnapshot!.position.y
+            let playerRelativeClickX = ev.x - (dimensions.x + dimensions.width / 2.0)
+            let playerRelativeClickY = ev.y - (dimensions.y + dimensions.height / 2.0)
 
-            let playerRelativeClickX = ev.clientX - canvas.clientLeft - canvas.clientWidth / 2.0
-            let playerRelativeClickY = ev.clientY - canvas.clientTop - canvas.clientHeight / 2.0
-
-            let angle = Math.atan(playerRelativeClickY / playerRelativeClickX)
+            let angle = Math.atan2(playerRelativeClickY, playerRelativeClickX)
 
             let velX = PARTICLE_INITIAL_VELOCITY * Math.cos(angle)
             let velY = PARTICLE_INITIAL_VELOCITY * Math.sin(angle)

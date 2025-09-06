@@ -8,6 +8,7 @@ export const PARTICLE_SQUARE_LENGTH_TILES = 0.1
 export const PLAYER_SPEED = 5
 export const PARTICLE_INITIAL_VELOCITY = 10
 export const PARTICLE_LIFETIME_MS = 1000
+export const CANVAS_ID = "home_main_game_canvas_id"
 
 export interface Renderer {
     isClientVisible(): boolean,
@@ -17,6 +18,7 @@ export interface Renderer {
     attachPlayerIdentity(player: Player): void,
     requestFullscreenMode(): void,
     exitFullScreenMode(): void,
+    getDimensions(): { width: number, height: number, x: number, y: number }
     updateDimensions(width: number | null, height: number | null): void,
     setVisibility(visible: boolean): void
 }
@@ -51,32 +53,44 @@ export class DefaultRenderer implements Renderer {
         this.canvas = document.createElement("canvas");
         this.canvas.width = viewPortWidthPx;
         this.canvas.height = viewPortHeightPx;
+        this.canvas.id = CANVAS_ID
+        this.canvas.className = "select-none"
         this.clientContainer = clientContainer;
 
         this.container.appendChild(this.canvas);
         clientContainer.appendChild(this.container);
     }
 
+    getDimensions(): { width: number; height: number; x: number; y: number } {
+        let dims = this.canvas.getBoundingClientRect()
+        return {
+            width: dims.width,
+            height: dims.height,
+            x: dims.left,
+            y: dims.top
+        }
+    }
+
     updateDimensions(width: number | null, height: number | null) {
-        if (width) {
+        if (width != null) {
             this.canvas.width = width
         }
-        if (height) {
+        if (height != null) {
             this.canvas.height = height
         }
         let previousWidth = this.viewPortWidthPx
         let previousHeight = this.viewPortHeightPx
 
-        this.container.className = `w-[${width ?? previousWidth}px] h-[${height ?? previousHeight}px]`
+        this.container.className = `w-[${width ?? previousWidth}px] h-[${height ?? previousHeight}px] select-none`
         this.viewPortWidthPx = width ?? previousWidth;
         this.viewPortHeightPx = height ?? previousHeight;
 
     }
 
     requestFullscreenMode(): void {
+        this.canvas.requestFullscreen();
         this.updateDimensions(window.outerWidth, window.outerHeight)
         this.isMinimized = false
-        this.canvas.requestFullscreen();
     }
 
     exitFullScreenMode(): void {
@@ -97,7 +111,7 @@ export class DefaultRenderer implements Renderer {
     }
 
     getMainCanvas(): HTMLElement {
-        return this.canvas;
+        return document.getElementById(CANVAS_ID)!;
     }
 
     dispose() {
