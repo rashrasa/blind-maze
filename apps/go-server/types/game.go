@@ -70,12 +70,23 @@ func (state *GameState) Tick(durationMs float64) {
 		collisionVY := -speed * math.Sin(newAngle)
 
 		// Check for particle collisions
-		// TODO: Reduce number of rows and columns being checked
 		for j, row := range state.MapLayout.Tiles {
+			if particleTopY > float64(j)+float64(1) {
+				continue
+			}
+			if particleBottomY < float64(j) {
+				continue
+			}
 			for i, columnsByte := range row {
 				for bitIndex := 7; bitIndex >= 0; bitIndex-- {
 					y := j
 					x := (i * 8) + (7 - bitIndex)
+					if particleLeftX > float64(x)+float64(1) {
+						continue
+					}
+					if particleRightX < float64(x) {
+						continue
+					}
 					bit := (columnsByte >> bitIndex) & 0b0000_0001
 					if bit == 0b0000_0001 {
 						// Heading right
