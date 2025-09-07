@@ -24,11 +24,6 @@ Full stack web game, organized as a TurboRepo.
 
 2. Install Turbo using `pnpm i turbo`.
 
-3. Create a `.env.local` file in `apps/frontend` root, add secrets
-   `NEXT_PUBLIC_SUPABASE_URL` and `NEXT_PUBLIC_SUPABASE_ANON_KEY`
-
-4. Manually create a user in Supabase Authentication with the Email and Password sign up method
-
 ### Run
 
 Clone repo, install dependencies by running `pnpm install` in the project root.

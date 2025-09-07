@@ -5,21 +5,23 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"os"
 	"runtime"
+	"strconv"
 	"strings"
 	"sync"
 	"time"
 
 	"github.com/gorilla/websocket"
+	"github.com/joho/godotenv"
 	"github.com/rashrasa/blind-maze/apps/go-server/generation"
 	"github.com/rashrasa/blind-maze/apps/go-server/types"
 )
 
 /*
-	@blind-maze/go-server
+@blind-maze/go-server
 
-	Hosts a single instance of Blind Maze
-
+Hosts a single instance of Blind Maze
 */
 
 const ClientNewConnectionMessage uint8 = 0
@@ -218,6 +220,25 @@ func startGlobalTickCycle() {
 }
 
 func main() {
+	err := godotenv.Load(".env")
+	if err != nil {
+		log.Print(err)
+		return
+	}
+
+	hostIp := os.Getenv("BLIND_MAZE_SERVER_IP")
+	if hostIp == "" {
+		hostIp = "localhost"
+	}
+	parsed, err := strconv.ParseUint(os.Getenv("BLIND_MAZE_SERVER_PORT"), 10, 16)
+	var port uint16
+	if err != nil {
+		port = uint16(3001)
+	}
+	port = uint16(parsed)
+
+	host := fmt.Sprintf("%s:%d", hostIp, port)
+
 	gameState.MapLayout = generation.GenerateMap()
 
 	webSocketHandler := WebsocketHandler{
@@ -229,7 +250,6 @@ func main() {
 	go startGlobalTickCycle()
 
 	http.Handle("/", webSocketHandler)
-	log.Println("Started server")
-
-	log.Fatal(http.ListenAndServe("localhost:3001", nil))
+	log.Println("Started server @ " + host)
+	log.Fatal(http.ListenAndServe(host, nil))
 }

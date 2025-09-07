@@ -3,8 +3,9 @@
 import { GameClient } from "@blind-maze/client";
 import { useEffect, useRef } from "react";
 import { Player } from "@blind-maze/types";
+import { v4 } from "uuid"
 
-const playerId: string = crypto.randomUUID()
+const playerId: string = v4()
 const playerColor = `rgba(${Math.floor(Math.random() * 255 + 1)}, ${Math.floor(Math.random() * 255 + 1)}, ${Math.floor(Math.random() * 255 + 1)}, 1)`
 const player: Player = {
     uuid: playerId,
@@ -22,12 +23,14 @@ const CLIENT_WIDTH_PX = 800
 const CLIENT_HEIGHT_PX = 600
 
 export default function GameContainer({ playerId }: GameContainerProps) {
+    let ip = process.env['NEXT_PUBLIC_BLIND_MAZE_SERVER_IP'] ?? "localhost"
+    let port = Number(process.env['NEXT_PUBLIC_BLIND_MAZE_SERVER_PORT']) ?? 3001
     const container = useRef<HTMLDivElement | null>(null);
     let client: GameClient | null = null
 
     useEffect(() => {
         client = new GameClient(player, container.current!, CLIENT_WIDTH_PX, CLIENT_HEIGHT_PX);
-        client.connectToServer("ws://localhost:3001")
+        client.connectToServer(`ws://${ip}:${port}`)
         client.setVisibility(true)
 
         // TODO: Attach player identities when encountering new players, maybe in a pre-game lobby
