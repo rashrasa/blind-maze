@@ -14,8 +14,6 @@ Full stack web game, organized as a TurboRepo.
 
 **Rust Client (archived for now)**: MVP client written in rust, may be completed in the future. Can be found at `packages/rust-client`
 
-**Typescript Server (archived)**: Server written in typescript. Can be found at `apps/server`
-
 ## Development
 
 ### Dependencies
