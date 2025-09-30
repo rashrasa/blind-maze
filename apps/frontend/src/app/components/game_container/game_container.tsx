@@ -23,27 +23,23 @@ const CLIENT_WIDTH_PX = 800
 const CLIENT_HEIGHT_PX = 600
 
 export default function GameContainer({ playerId }: GameContainerProps) {
-    let ip = process.env['NEXT_PUBLIC_BLIND_MAZE_SERVER_IP'] ?? "localhost"
+    const ip = process.env['NEXT_PUBLIC_BLIND_MAZE_SERVER_IP'] ?? "127.0.0.1"
     let port = Number(process.env['NEXT_PUBLIC_BLIND_MAZE_SERVER_PORT']) ?? 3001
+    if (Number.isNaN(port)) port = 3001
     const container = useRef<HTMLDivElement | null>(null);
-    let client: GameClient | null = null
+    let client:GameClient | null = null;
 
     useEffect(() => {
         client = new GameClient(player, container.current!, CLIENT_WIDTH_PX, CLIENT_HEIGHT_PX);
-        client.connectToServer(`ws://${ip}:${port}`)
-        client.setVisibility(true)
+        client.connectToServer(`ws://${ip}:${port}`);
+        client.setVisibility(true);
 
         // TODO: Attach player identities when encountering new players, maybe in a pre-game lobby
         client.attachPlayerIdentity(player)
 
         return () => {
-            if (client == null) {
-                console.warn("Attempted to dispose client while null.")
-                return
-            }
-            client.dispose()
         }
-    }, []
+    }, [ip, port]
     )
     return (
         <div

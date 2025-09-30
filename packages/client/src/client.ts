@@ -16,7 +16,6 @@ import { DefaultRenderer, PARTICLE_INITIAL_VELOCITY, PARTICLE_LIFETIME_MS, PLAYE
 import { DefaultInputHandler, InputHandler } from "./core/inputs.js"
 
 import WebSocketAsPromised from "websocket-as-promised";
-import "crypto";
 
 // Appends itself to container
 export class GameClient {

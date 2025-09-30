@@ -43,32 +43,30 @@ export class DefaultInputHandler implements InputHandler {
 
     private handleKeyUp(event: KeyboardEvent) {
         const inputKey = event.code
+        this.keysPressed.set(inputKey, false)
         switch (inputKey) {
             case "ArrowUp":
             case "ArrowDown":
             case "ArrowLeft":
             case "ArrowRight":
                 event.preventDefault()
-                this.keysPressed.set(inputKey, false)
                 break;
             default:
-                this.keysPressed.set(inputKey, false)
                 break;
         }
     }
 
     private handleKeyDown(event: KeyboardEvent) {
         const inputKey = event.code
+        this.keysPressed.set(inputKey, true)
         switch (inputKey) {
             case "ArrowUp":
             case "ArrowDown":
             case "ArrowLeft":
             case "ArrowRight":
                 event.preventDefault()
-                this.keysPressed.set(inputKey, true)
                 break;
             default:
-                this.keysPressed.set(inputKey, true)
                 break;
         }
     }
