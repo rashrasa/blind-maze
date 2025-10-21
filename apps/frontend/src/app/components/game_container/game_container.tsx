@@ -22,7 +22,7 @@ interface GameContainerProps {
 const CLIENT_WIDTH_PX = 800
 const CLIENT_HEIGHT_PX = 600
 
-export default function GameContainer({ playerId }: GameContainerProps) {
+export default function GameContainer() {
     const ip = process.env['NEXT_PUBLIC_BLIND_MAZE_SERVER_IP'] ?? "127.0.0.1"
     let port = Number(process.env['NEXT_PUBLIC_BLIND_MAZE_SERVER_PORT']) ?? 3001
     if (Number.isNaN(port)) port = 3001

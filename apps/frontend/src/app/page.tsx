@@ -4,13 +4,13 @@ import { createClient } from "@/utils/supabase/server";
 import React from 'react';
 
 export default async function Page() {
-  const supabase = await createClient();
-  const playerId = (await supabase.auth.getUser()).data.user!.id
+  //const supabase = await createClient();
+  //const playerId = (await supabase.auth.getUser()).data.user!.id
   return (
     <main>
       <div>
         <div>
-          <GameContainer playerId={playerId} />
+          <GameContainer />
         </div>
       </div>
     </main>
