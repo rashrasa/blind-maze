@@ -1,4 +1,4 @@
-# (WIP) blind-maze
+# blind-maze
 
 ![Recording 2026-01-17 194300](https://github.com/user-attachments/assets/2ad0c130-5865-46e5-a5c4-499206b3fce3)
 
@@ -6,17 +6,21 @@
 
 Full stack web game, organized as a TurboRepo.
 
+## Highlights
+
+- Dedicated server
+- Hand rolled binary encoding
+- Supabase integration using middleware for auth routing
+
 ## Main Components
 
-**Game Server (In-Progress)**: Written in Go, can be found at `apps/go-server`
+**Game Server**: Written in Go, can be found at `apps/go-server`.
 
-**Game Client (In-Progress)**: Written in Typescript, uses DOM library, found at `packages/client`
+- Runs a global tick
 
-**Frontend (In-Progress)**: Next.js app that handles authentication, main UI, and can be found at `apps/frontend`
+**Game Client**: Written in Typescript, uses DOM library, found at `packages/client`
 
-### Others:
-
-**Rust Client (archived for now)**: MVP client written in rust, may be completed in the future. Can be found at `packages/rust-client`
+**Frontend**: Next.js app that can handle authentication, main UI, and can be found at `apps/frontend`
 
 ## Development
 
