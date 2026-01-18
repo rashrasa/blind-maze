@@ -1,5 +1,9 @@
 # (WIP) blind-maze
 
+![Recording 2026-01-17 194300](https://github.com/user-attachments/assets/2ad0c130-5865-46e5-a5c4-499206b3fce3)
+
+*Two local clients connected to a dedicated server through websockets.*
+
 Full stack web game, organized as a TurboRepo.
 
 ## Main Components
